@@ -12,22 +12,26 @@
 #include <rtdevice.h>
 #include <board.h>
 
+#include <wifi_mqtt.h>
+
 /* defined the LED0 pin: PE7 */
 #define LED0_PIN    GET_PIN(E, 7)
 
 int main(void)
 {
-    int count = 1;
-    /* set LED0 pin mode to output */
-    rt_pin_mode(LED0_PIN, PIN_MODE_OUTPUT);
+    // int count = 1;
+    // /* set LED0 pin mode to output */
+    // rt_pin_mode(LED0_PIN, PIN_MODE_OUTPUT);
 
-    while (count++)
-    {
-        rt_pin_write(LED0_PIN, PIN_HIGH);
-        rt_thread_mdelay(500);
-        rt_pin_write(LED0_PIN, PIN_LOW);
-        rt_thread_mdelay(500);
-    }
+    // while (count++)
+    // {
+    //     rt_pin_write(LED0_PIN, PIN_HIGH);
+    //     rt_thread_mdelay(500);
+    //     rt_pin_write(LED0_PIN, PIN_LOW);
+    //     rt_thread_mdelay(500);
+    // }
+
+    wifi_mqtt_start();
 
     return RT_EOK;
 }
