@@ -31,7 +31,7 @@ int main(void)
     //     rt_thread_mdelay(500);
     // }
 
-    wifi_mqtt_start();
+    mqtt_start();
 
     return RT_EOK;
 }

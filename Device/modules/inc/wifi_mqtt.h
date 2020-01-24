@@ -4,7 +4,7 @@
  * @Author: adol
  * @Date: 2019-11-07 21:03:16
  * @LastEditors  : Please set LastEditors
- * @LastEditTime : 2020-01-23 20:20:37
+ * @LastEditTime : 2020-01-24 19:27:58
  */
 /*
  * Copyright (c) 2006-2018, RT-Thread Development Team
@@ -57,12 +57,16 @@ typedef enum
     DEVICE_MAX
 } iotb_mqtt_message_t;
 
-void wifi_mqtt_publish(const char *send_str);
+
 
 // rt_err_t wifi_mqtt_init();
-void wifi_mqtt_start();
+// void wifi_mqtt_start();
+// void wifi_mqtt_publish(const char *send_str);
 
-extern char *wifi_mqtt_message_buffer[DEVICE_MAX];
+int mqtt_start(void);
+int mqtt_publish(const char *send_str);
+
+extern char *mqtt_message_buffer[DEVICE_MAX];
 
 
 // void iotb_init(void *arg);
