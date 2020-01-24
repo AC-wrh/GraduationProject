@@ -5,7 +5,7 @@
 #include <rtthread.h>
 
 #define DBG_ENABLE
-#define DBG_SECTION_NAME "mqtt.sample"
+#define DBG_SECTION_NAME "wifi_mqtt"
 #define DBG_LEVEL DBG_LOG
 #define DBG_COLOR
 #include <rtdbg.h>
