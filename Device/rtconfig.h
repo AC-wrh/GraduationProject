@@ -99,6 +99,9 @@
 #define RT_USING_I2C
 #define RT_USING_I2C_BITOPS
 #define RT_USING_PIN
+#define RT_USING_ADC
+#define RT_USING_SENSOR
+#define RT_USING_SENSOR_CMD
 
 /* Using USB */
 
@@ -218,8 +221,6 @@
 
 /* peripheral libraries and drivers */
 
-#define PKG_USING_SHT3X
-#define PKG_USING_SHT3X_V100
 /* end of peripheral libraries and drivers */
 
 /* miscellaneous packages */
@@ -248,6 +249,8 @@
 #define BSP_USING_UART
 #define BSP_USING_UART1
 #define BSP_USING_UART2
+#define BSP_USING_I2C
+#define BSP_USING_ADC
 /* end of On-chip Peripheral Drivers */
 
 /* Board extended module Drivers */
