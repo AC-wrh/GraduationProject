@@ -16,6 +16,7 @@
 #include "drv_common.h"
 #include "rtdef.h"
 
+#include "dev_sensor.h"
 /*-------------------------- CONFIG BEGIN --------------------------*/
 
 /* Hardware Drivers Config */

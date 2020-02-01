@@ -3,13 +3,15 @@
  * @version: 
  * @Author: Adol
  * @Date: 2020-01-31 19:37:41
- * @LastEditTime : 2020-01-31 21:00:22
+ * @LastEditTime : 2020-02-01 16:27:49
  */
 #include <board.h>
 
 #define DBG_TAG "dev_sensor"
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
+
+// #include "dev_sensor.h"
 
 /**
  * 1. sht3x sensor
@@ -75,13 +77,15 @@ rt_err_t dev_sensor_sht3x_init(void)
 /**
  * 2. mq2 sensor
 */
+#include "drv_adc.h"
+
 static uint8_t dev_mq2_inited = 0;
 static uint8_t dev_mq2_busy = 0;
 
-rt_err_t dev_sensor_mq2_deinit(void)
-{
-    ;
-}
+// rt_err_t dev_sensor_mq2_deinit(void)
+// {
+//     ;
+// }
 
 rt_err_t dev_sensor_mq2_init(void)
 {
@@ -91,13 +95,145 @@ rt_err_t dev_sensor_mq2_init(void)
     }
 
     dev_mq2_busy = 1;
-
-    
-
-    dev_sht3x_inited = 1;
-    dev_sht3x_busy = 0;
+    MX_ADC1_Init();
+    dev_mq2_inited = 1;
+    dev_mq2_busy = 0;
 
     LOG_I("mq2 device init success!");
 
     return RT_EOK;
+}
+
+/**
+ * 3. zph02 sensor
+*/
+// static uint8_t dev_zph02_inited = 0;
+// static uint8_t dev_zph02_busy = 0;
+
+/**
+ * 4. sensor data 
+*/
+#define DEV_CLOSE       0
+#define DEV_OPEN        1
+
+dev_sensor_data_t dev_sensor_data_result = {
+    .sht3x_data_temp = 0.0f,
+    .sht3x_data_humi = 0.0f,
+    .mq2_data = 0,
+    .zph02_data = 0,
+
+    /* 0: read finish; 1: not finish */
+    .sht3x_status = -RT_ERROR,
+    .mq2_status = -RT_ERROR,
+    .zph02_status = -RT_ERROR,
+
+    /* 0: device close; 1: device open */
+    .delay1_status = DEV_CLOSE,
+    .delay2_status = DEV_CLOSE,
+    .beep_status = DEV_CLOSE,
+
+    .status = -RT_ERROR};
+
+void dev_sensor_data_upload(dev_sensor_data_t *in_data, dev_sensor_data_t *out_data)
+{
+    rt_base_t level = rt_hw_interrupt_disable();
+
+    out_data->sht3x_data_temp = in_data->sht3x_data_temp;
+    out_data->sht3x_data_humi = in_data->sht3x_data_humi;
+    out_data->mq2_data = in_data->mq2_data;
+    out_data->zph02_data = in_data->zph02_data;
+
+    out_data->sht3x_status = in_data->sht3x_status;
+    out_data->mq2_status = in_data->mq2_status;
+    out_data->zph02_status = in_data->zph02_status;
+    
+    out_data->delay1_status = in_data->delay1_status;
+    out_data->delay2_status = in_data->delay2_status;
+    out_data->beep_status = in_data->beep_status;
+
+    rt_hw_interrupt_enable(level);
+}
+
+void dev_sensor_data_read(void)
+{
+    dev_sensor_data_t sensor_data;
+
+    dev_sensor_data_upload(&dev_sensor_data_result, &sensor_data);
+
+    if (dev_sht3x_inited == 0)
+    {/* sht3x */
+        LOG_E("sht3x init failed! Retry...");
+        rt_thread_mdelay(2000);
+        if (dev_sht3x_busy == 0)
+        {
+            dev_sensor_sht3x_init();
+        }
+    }
+    else
+    {
+        sensor_data.sht3x_status = -RT_ERROR;
+        sht3x_read_singleshot(dev_sht3x);
+        // rt_thread_mdelay(1);
+        sensor_data.sht3x_data_temp = dev_sht3x->temperature;
+        sensor_data.sht3x_data_humi = dev_sht3x->humidity;
+        sensor_data.sht3x_status = RT_EOK;
+    }
+
+    if (dev_mq2_inited == 0)
+    {/* mq2 */
+        LOG_E("mq2 init failed! Retry...");
+        rt_thread_mdelay(2000);
+        if (dev_mq2_busy == 0)
+        {
+            dev_sensor_mq2_init();
+        }
+    }
+    else
+    {
+        sensor_data.mq2_status = -RT_ERROR;
+        // rt_thread_mdelay(1);
+        sensor_data.mq2_data = get_adc_value();
+        sensor_data.mq2_status = RT_EOK;
+    }
+
+    // if (dev_sht3x_inited == 0)
+    // {/* zph02 */
+    //     LOG_E("sht3x init failed! Retry...");
+    //     rt_thread_mdelay(2000);
+    //     if (dev_sht3x_busy == 0)
+    //     {
+    //         dev_sensor_sht3x_init();
+    //     }
+    // }
+    // else
+    // {
+    //     rt_thread_mdelay(1);
+    //     sht3x_read_singleshot(dev_sht3x);
+    //     sensor_data.sht3x_data_temp = dev_sht3x->temperature;
+    //     sensor_data.sht3x_data_humi = dev_sht3x->humidity;
+    // }
+
+    dev_sensor_data_upload(&sensor_data, &dev_sensor_data_result);
+}
+
+static void _dev_sensor_read_thr(void *arg)
+{
+    do
+    {
+        dev_sensor_data_read();
+        rt_thread_mdelay(1000);
+    } while(1);
+}
+
+void dev_sensor_read_start(void)
+{
+    rt_thread_t sensor_read_thr = RT_NULL;
+    sensor_read_thr = rt_thread_create("sensor",
+                                    _dev_sensor_read_thr,
+                                    RT_NULL,
+                                    2048, 12, 10);
+    if (sensor_read_thr != RT_NULL)
+    {
+        rt_thread_startup(sensor_read_thr);
+    }
 }
