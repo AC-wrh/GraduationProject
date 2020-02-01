@@ -17,6 +17,7 @@
 #include "rtdef.h"
 
 #include "dev_sensor.h"
+#include "wifi_mqtt.h"
 /*-------------------------- CONFIG BEGIN --------------------------*/
 
 /* Hardware Drivers Config */

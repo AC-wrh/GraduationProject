@@ -32,6 +32,8 @@ int main(void)
     //     LOG_D("Hello RT-Thread!");
     //     rt_thread_mdelay(1000);
     // }
-    dev_sensor_read_start();
+
+    // dev_sensor_read_start();
+
     return RT_EOK;
 }
