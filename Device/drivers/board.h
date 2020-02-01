@@ -15,6 +15,7 @@
 #include <stm32l4xx.h>
 #include "drv_common.h"
 #include "rtdef.h"
+#include "string.h"
 
 #include "dev_sensor.h"
 #include "wifi_mqtt.h"

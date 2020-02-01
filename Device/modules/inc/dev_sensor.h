@@ -3,7 +3,7 @@
  * @version: 
  * @Author: Adol
  * @Date: 2020-01-31 19:37:49
- * @LastEditTime : 2020-02-01 19:13:26
+ * @LastEditTime : 2020-02-01 23:03:11
  */
 #ifndef __DEV_SENSOR_H__
 #define __DEV_SENSOR_H__
@@ -18,15 +18,29 @@
 #include <rtdef.h>
 
 /**
- * device pin config
+ * 1. relay and beep device
 */
-#define PIN_RELAY1      GET_PIN(D, 12)
-#define PIN_RELAY2      GET_PIN(D, 13)
-#define PIN_RELAY3      GET_PIN(D, 14)
+// #define PIN_RELAY1      GET_PIN(D, 12)
+#define PIN_RELAY1      GET_PIN(D, 13)
+#define PIN_RELAY2      GET_PIN(D, 14)
 #define PIN_BEEP        GET_PIN(D, 15)
 
 /**
- * 1. device status list
+ * 2. sht3x sensor
+*/
+#define PIN_I2C1_SCL GET_PIN(B, 8)
+#define PIN_I2C1_SDA GET_PIN(B, 9)
+#define SHT3X_I2C_BUS_NAME "i2c1"
+#define SHT3X_ADDR 0x44
+
+/**
+ * 4. sensor data 
+*/
+#define DEV_CLOSE       0
+#define DEV_OPEN        1
+
+/**
+ * 5. device status list
 */
 typedef enum
 {
@@ -49,8 +63,8 @@ typedef struct
     rt_uint8_t zph02_data;
     rt_err_t zph02_status;
 
-    rt_err_t delay1_status;
-    rt_err_t delay2_status;
+    rt_err_t relay1_status;
+    rt_err_t relay2_status;
     rt_err_t beep_status;
 
     uint16_t status; /* 0: read finish; 1: not finish */
@@ -58,11 +72,11 @@ typedef struct
     uint8_t reserved;
 } dev_sensor_data_t;
 
-// rt_err_t dev_sensor_beep_ctl(dev_sensor_t beep_t);
-// rt_err_t dev_sensor_relay1_ctl(dev_sensor_t relay_t);
-// rt_err_t dev_sensor_relay2_ctl(dev_sensor_t relay_t);
+rt_err_t dev_sensor_beep_ctl(dev_sensor_t beep_t);
+rt_err_t dev_sensor_relay1_ctl(dev_sensor_t relay_t);
+rt_err_t dev_sensor_relay2_ctl(dev_sensor_t relay_t);
 // rt_err_t dev_sensor_relay3_ctl(dev_sensor_t relay_t);
-rt_err_t dev_sensor_ctl(rt_base_t pin_t, dev_sensor_t status_t);
+// rt_err_t dev_sensor_ctl(rt_base_t pin_t, dev_sensor_t status_t);
 
 void dev_sensor_read_start(void);
 
