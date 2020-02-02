@@ -16,24 +16,9 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
-/* PLEASE DEFINE the LED0 pin for your board, such as: PA5 */
-// #define LED0_PIN    GET_PIN(A, 5)
-
 int main(void)
 {
-    // int count = 1;
-    // /* set LED0 pin mode to output */
-    // rt_pin_mode(LED0_PIN, PIN_MODE_OUTPUT);
-
-    // while (count++)
-    // {
-    //     /* set LED0 pin level to high or low */
-    //     rt_pin_write(LED0_PIN, count % 2);
-    //     LOG_D("Hello RT-Thread!");
-    //     rt_thread_mdelay(1000);
-    // }
-
-    // dev_sensor_read_start();
+    dev_sensor_init();
 
     return RT_EOK;
 }

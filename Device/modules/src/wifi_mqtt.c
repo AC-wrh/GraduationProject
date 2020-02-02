@@ -3,7 +3,7 @@
  * @version: 
  * @Author: Adol
  * @Date: 2020-01-28 18:51:13
- * @LastEditTime : 2020-02-01 20:09:58
+ * @LastEditTime : 2020-02-01 23:56:35
  */
 
 #include <board.h>
@@ -78,38 +78,32 @@ static void mqtt_sub_callback(MQTTClient *c, MessageData *msg_data)
     }
     else if (!(strcmp(((char *)msg_data->message->payload), mqtt_message_buffer[SWITCH_1_ON])))
     {
-        // dev_sensor_relay1_ctl(DEV_SENSOR_OPEN);
-        // dev_sensor_ctl(PIN_RELAY1, DEV_SENSOR_OPEN);
+        dev_sensor_relay1_ctl(DEV_SENSOR_OPEN);
         mqtt_publish(mqtt_message_buffer[SWITCH_1_ON]);
     }
     else if (!(strcmp(((char *)msg_data->message->payload), mqtt_message_buffer[SWITCH_1_OFF])))
     {
-        // dev_sensor_relay1_ctl(DEV_SENSOR_CLOSE);
-        // dev_sensor_ctl(PIN_RELAY1, DEV_SENSOR_CLOSE);
+        dev_sensor_relay1_ctl(DEV_SENSOR_CLOSE);
         mqtt_publish(mqtt_message_buffer[SWITCH_1_OFF]);
     }
     else if (!(strcmp(((char *)msg_data->message->payload), mqtt_message_buffer[SWITCH_2_ON])))
     {
-        // dev_sensor_relay2_ctl(DEV_SENSOR_OPEN);
-        // dev_sensor_ctl(PIN_RELAY2, DEV_SENSOR_OPEN);
+        dev_sensor_relay2_ctl(DEV_SENSOR_OPEN);
         mqtt_publish(mqtt_message_buffer[SWITCH_2_ON]);
     }
     else if (!(strcmp(((char *)msg_data->message->payload), mqtt_message_buffer[SWITCH_2_OFF])))
     {
-        // dev_sensor_relay2_ctl(DEV_SENSOR_CLOSE);
-        // dev_sensor_ctl(PIN_RELAY2, DEV_SENSOR_CLOSE);
+        dev_sensor_relay2_ctl(DEV_SENSOR_CLOSE);
         mqtt_publish(mqtt_message_buffer[SWITCH_2_OFF]);
     }
     else if (!(strcmp(((char *)msg_data->message->payload), mqtt_message_buffer[SWITCH_3_ON])))
     {
-        // dev_sensor_relay3_ctl(DEV_SENSOR_OPEN);
-        // dev_sensor_ctl(PIN_RELAY3, DEV_SENSOR_OPEN);
+        dev_sensor_beep_ctl(DEV_SENSOR_OPEN);
         mqtt_publish(mqtt_message_buffer[SWITCH_3_ON]);
     }
     else if (!(strcmp(((char *)msg_data->message->payload), mqtt_message_buffer[SWITCH_3_OFF])))
     {
-        // dev_sensor_relay3_ctl(DEV_SENSOR_CLOSE);
-        // dev_sensor_ctl(PIN_RELAY3, DEV_SENSOR_CLOSE);
+        dev_sensor_beep_ctl(DEV_SENSOR_CLOSE);
         mqtt_publish(mqtt_message_buffer[SWITCH_3_OFF]);
     }
 }

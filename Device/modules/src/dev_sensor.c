@@ -3,7 +3,7 @@
  * @version: 
  * @Author: Adol
  * @Date: 2020-01-31 19:37:41
- * @LastEditTime : 2020-02-01 23:24:18
+ * @LastEditTime : 2020-02-02 14:18:31
  */
 #include <board.h>
 
@@ -11,10 +11,128 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
-// #include "dev_sensor.h"
+/**
+ * 1. relay and beep device control
+*/
+dev_sensor_status_t dev_sensor_status_result = {
+    .relay1_status = DEV_SENSOR_DEINIT,
+    .relay2_status = DEV_SENSOR_DEINIT,
+    .beep_status = DEV_SENSOR_DEINIT};
+
+rt_err_t dev_sensor_relay1_ctl(dev_sensor_t relay_t)
+{
+    switch (relay_t)
+    {
+    case DEV_SENSOR_INIT:
+        /* set the pin mode to push-pull output */
+        rt_pin_mode(PIN_RELAY1, PIN_MODE_OUTPUT);
+        rt_pin_write(PIN_RELAY1, PIN_HIGH);
+        dev_sensor_status_result.relay1_status = DEV_SENSOR_CLOSE;
+        break;
+    case DEV_SENSOR_DEINIT:
+        rt_pin_write(PIN_RELAY1, PIN_HIGH);
+        dev_sensor_status_result.relay1_status = DEV_SENSOR_CLOSE;
+        break;
+    case DEV_SENSOR_OPEN:
+        rt_pin_write(PIN_RELAY1, PIN_LOW);
+        dev_sensor_status_result.relay1_status = DEV_SENSOR_OPEN;
+        break;
+    case DEV_SENSOR_CLOSE:
+        rt_pin_write(PIN_RELAY1, PIN_HIGH);
+        dev_sensor_status_result.relay1_status = DEV_SENSOR_CLOSE;
+        break;
+    default:
+        break;
+    }
+
+    return RT_EOK;
+}
+
+rt_err_t dev_sensor_relay2_ctl(dev_sensor_t relay_t)
+{
+    switch (relay_t)
+    {
+    case DEV_SENSOR_INIT:
+        /* set the pin mode to push-pull output */
+        rt_pin_mode(PIN_RELAY2, PIN_MODE_OUTPUT);
+        rt_pin_write(PIN_RELAY2, PIN_HIGH);
+        dev_sensor_status_result.relay2_status = DEV_SENSOR_CLOSE;
+        break;
+    case DEV_SENSOR_DEINIT:
+        rt_pin_write(PIN_RELAY2, PIN_HIGH);
+        dev_sensor_status_result.relay2_status = DEV_SENSOR_CLOSE;
+        break;
+    case DEV_SENSOR_OPEN:
+        rt_pin_write(PIN_RELAY2, PIN_LOW);
+        dev_sensor_status_result.relay2_status = DEV_SENSOR_OPEN;
+        break;
+    case DEV_SENSOR_CLOSE:
+        rt_pin_write(PIN_RELAY2, PIN_HIGH);
+        dev_sensor_status_result.relay2_status = DEV_SENSOR_CLOSE;
+        break;
+    default:
+        break;
+    }
+
+    return RT_EOK;
+}
+
+rt_err_t dev_sensor_beep_ctl(dev_sensor_t beep_t)
+{
+    switch (beep_t)
+    {
+    case DEV_SENSOR_INIT:
+        /* set the pin mode to push-pull output */
+        rt_pin_mode(PIN_BEEP, PIN_MODE_OUTPUT);
+        rt_pin_write(PIN_BEEP, PIN_HIGH);
+        dev_sensor_status_result.beep_status = DEV_SENSOR_CLOSE;
+        break;
+    case DEV_SENSOR_DEINIT:
+        rt_pin_write(PIN_BEEP, PIN_HIGH);
+        dev_sensor_status_result.beep_status = DEV_SENSOR_CLOSE;
+        break;
+    case DEV_SENSOR_OPEN:
+        rt_pin_write(PIN_BEEP, PIN_LOW);
+        dev_sensor_status_result.beep_status = DEV_SENSOR_OPEN;
+        break;
+    case DEV_SENSOR_CLOSE:
+        rt_pin_write(PIN_BEEP, PIN_HIGH);
+        dev_sensor_status_result.beep_status = DEV_SENSOR_CLOSE;
+        break;
+    default:
+        break;
+    }
+
+    return RT_EOK;
+}
+
+rt_err_t dev_sensor_ctl(rt_base_t pin_t, dev_sensor_t status_t)
+{
+    switch (status_t)
+    {
+    case DEV_SENSOR_INIT:
+        /* set the pin mode to push-pull output */
+        rt_pin_mode(pin_t, PIN_MODE_OUTPUT);
+        rt_pin_write(pin_t, PIN_HIGH);
+        break;
+    case DEV_SENSOR_DEINIT:
+        rt_pin_write(pin_t, PIN_HIGH);
+        break;
+    case DEV_SENSOR_OPEN:
+        rt_pin_write(pin_t, PIN_LOW);
+        break;
+    case DEV_SENSOR_CLOSE:
+        rt_pin_write(pin_t, PIN_HIGH);
+        break;
+    default:
+        break;
+    }
+
+    return RT_EOK;
+}
 
 /**
- * 1. sht3x sensor
+ * 2. sht3x sensor
 */
 #include "drv_i2c.h"
 #include "sht3x.h"
@@ -70,7 +188,7 @@ rt_err_t dev_sensor_sht3x_init(void)
 }
 
 /**
- * 2. mq2 sensor
+ * 3. mq2 sensor
 */
 #include "drv_adc.h"
 
@@ -100,13 +218,13 @@ rt_err_t dev_sensor_mq2_init(void)
 }
 
 /**
- * 3. zph02 sensor
+ * 4. zph02 sensor
 */
 // static uint8_t dev_zph02_inited = 0;
 // static uint8_t dev_zph02_busy = 0;
 
 /**
- * 4. sensor data 
+ * 5. sensor data 
 */
 dev_sensor_data_t dev_sensor_data_result = {
     .sht3x_data_temp = 0.0f,
@@ -114,15 +232,13 @@ dev_sensor_data_t dev_sensor_data_result = {
     .mq2_data = 0,
     .zph02_data = 0,
 
-    /* 0: read finish; 1: not finish */
-    .sht3x_status = -RT_ERROR,
-    .mq2_status = -RT_ERROR,
-    .zph02_status = -RT_ERROR,
+    .sht3x_status = DEV_SENSOR_DEINIT,
+    .mq2_status = DEV_SENSOR_DEINIT,
+    .zph02_status = DEV_SENSOR_DEINIT,
 
-    /* 0: device close; 1: device open */
-    .relay1_status = DEV_CLOSE,
-    .relay2_status = DEV_CLOSE,
-    .beep_status = DEV_CLOSE,
+    .relay1_status = DEV_SENSOR_DEINIT,
+    .relay2_status = DEV_SENSOR_DEINIT,
+    .beep_status = DEV_SENSOR_DEINIT,
 
     .status = -RT_ERROR};
 
@@ -138,7 +254,7 @@ void dev_sensor_data_upload(dev_sensor_data_t *in_data, dev_sensor_data_t *out_d
     out_data->sht3x_status = in_data->sht3x_status;
     out_data->mq2_status = in_data->mq2_status;
     out_data->zph02_status = in_data->zph02_status;
-    
+
     out_data->relay1_status = in_data->relay1_status;
     out_data->relay2_status = in_data->relay2_status;
     out_data->beep_status = in_data->beep_status;
@@ -153,7 +269,7 @@ void dev_sensor_data_read(void)
     dev_sensor_data_upload(&dev_sensor_data_result, &sensor_data);
 
     if (dev_sht3x_inited == 0)
-    {/* sht3x */
+    { /* sht3x */
         LOG_E("sht3x init failed! Retry...");
         rt_thread_mdelay(2000);
         if (dev_sht3x_busy == 0)
@@ -172,7 +288,7 @@ void dev_sensor_data_read(void)
     }
 
     if (dev_mq2_inited == 0)
-    {/* mq2 */
+    { /* mq2 */
         LOG_E("mq2 init failed! Retry...");
         rt_thread_mdelay(2000);
         if (dev_mq2_busy == 0)
@@ -205,6 +321,21 @@ void dev_sensor_data_read(void)
     //     sensor_data.sht3x_data_humi = dev_sht3x->humidity;
     // }
 
+    if (sensor_data.relay1_status != dev_sensor_status_result.relay1_status)
+    {
+        sensor_data.relay1_status = dev_sensor_status_result.relay1_status;
+    }
+    
+    if (sensor_data.relay2_status != dev_sensor_status_result.relay2_status)
+    {
+        sensor_data.relay2_status = dev_sensor_status_result.relay2_status;
+    }
+
+    if (sensor_data.beep_status != dev_sensor_status_result.beep_status)
+    {
+        sensor_data.beep_status = dev_sensor_status_result.beep_status;
+    }
+    
     dev_sensor_data_upload(&sensor_data, &dev_sensor_data_result);
 }
 
@@ -214,127 +345,35 @@ static void _dev_sensor_read_thr(void *arg)
     {
         dev_sensor_data_read();
         rt_thread_mdelay(1000);
-    } while(1);
+    } while (1);
 }
 
 void dev_sensor_read_start(void)
 {
     rt_thread_t sensor_read_thr = RT_NULL;
     sensor_read_thr = rt_thread_create("sensor",
-                                    _dev_sensor_read_thr,
-                                    RT_NULL,
-                                    2048, 12, 10);
+                                       _dev_sensor_read_thr,
+                                       RT_NULL,
+                                       2048, 12, 10);
     if (sensor_read_thr != RT_NULL)
     {
         rt_thread_startup(sensor_read_thr);
     }
 }
 
-rt_err_t dev_sensor_relay1_ctl(dev_sensor_t relay_t)
+rt_err_t dev_sensor_init(void)
 {
-    switch (relay_t)
-    {
-        case DEV_SENSOR_INIT:
-            /* set the pin mode to push-pull output */
-            rt_pin_mode(PIN_RELAY1, PIN_MODE_OUTPUT);
-            rt_pin_write(PIN_RELAY1, PIN_HIGH);
-            sensor_data.relay1_status = DEV_SENSOR_CLOSE;
-            break;
-        case DEV_SENSOR_DEINIT:
-            rt_pin_write(PIN_RELAY1, PIN_HIGH);
-            break;
-        case DEV_SENSOR_OPEN:
-            rt_pin_write(PIN_RELAY1, PIN_LOW);
-            sensor_data.relay1_status = DEV_SENSOR_OPEN;
-            break;
-        case DEV_SENSOR_CLOSE:
-            rt_pin_write(PIN_RELAY1, PIN_HIGH);
-            sensor_data.relay1_status = DEV_SENSOR_CLOSE;
-            break;
-        default:
-            break;
-    }
-
-    return RT_EOK;
-}
-
-rt_err_t dev_sensor_relay2_ctl(dev_sensor_t relay_t)
-{
-    switch (relay_t)
-    {
-        case DEV_SENSOR_INIT:
-            /* set the pin mode to push-pull output */
-            rt_pin_mode(PIN_RELAY2, PIN_MODE_OUTPUT);
-            rt_pin_write(PIN_RELAY2, PIN_HIGH);
-            sensor_data.relay2_status = DEV_SENSOR_CLOSE;
-            break;
-        case DEV_SENSOR_DEINIT:
-            rt_pin_write(PIN_RELAY2, PIN_HIGH);
-            break;
-        case DEV_SENSOR_OPEN:
-            rt_pin_write(PIN_RELAY2, PIN_LOW);
-            sensor_data.relay2_status = DEV_SENSOR_OPEN;
-            break;
-        case DEV_SENSOR_CLOSE:
-            rt_pin_write(PIN_RELAY2, PIN_HIGH);
-            sensor_data.relay2_status = DEV_SENSOR_CLOSE;
-            break;
-        default:
-            break;
-    }
-
-    return RT_EOK;
-}
-
-rt_err_t dev_sensor_beep_ctl(dev_sensor_t beep_t)
-{
-    switch (beep_t)
-    {
-        case DEV_SENSOR_INIT:
-            /* set the pin mode to push-pull output */
-            rt_pin_mode(PIN_BEEP, PIN_MODE_OUTPUT);
-            rt_pin_write(PIN_BEEP, PIN_HIGH);
-            sensor_data.beep_status = DEV_SENSOR_OPEN;
-            break;
-        case DEV_SENSOR_DEINIT:
-            rt_pin_write(PIN_BEEP, PIN_HIGH);
-            break;
-        case DEV_SENSOR_OPEN:
-            rt_pin_write(PIN_BEEP, PIN_LOW);
-            sensor_data.beep_status = DEV_SENSOR_OPEN;
-            break;
-        case DEV_SENSOR_CLOSE:
-            rt_pin_write(PIN_BEEP, PIN_HIGH);
-            sensor_data.beep_status = DEV_SENSOR_OPEN;
-            break;
-        default:
-            break;
-    }
-
-    return RT_EOK;
-}
-
-rt_err_t dev_sensor_ctl(rt_base_t pin_t, dev_sensor_t status_t)
-{
-    switch (status_t)
-    {
-    case DEV_SENSOR_INIT:
-        /* set the pin mode to push-pull output */
-        rt_pin_mode(pin_t, PIN_MODE_OUTPUT);
-        rt_pin_write(pin_t, PIN_HIGH);
-        break;
-    case DEV_SENSOR_DEINIT:
-        rt_pin_write(pin_t, PIN_HIGH);
-        break;
-    case DEV_SENSOR_OPEN:
-        rt_pin_write(pin_t, PIN_LOW);
-        break;
-    case DEV_SENSOR_CLOSE:
-        rt_pin_write(pin_t, PIN_HIGH);
-        break;
-    default:
-        break;
-    }
+    dev_sensor_relay1_ctl(DEV_SENSOR_INIT);
+    dev_sensor_relay2_ctl(DEV_SENSOR_INIT);
+    dev_sensor_beep_ctl(DEV_SENSOR_INIT);
+    // rt_thread_mdelay(100);
+    dev_sensor_sht3x_init();
+    // rt_thread_mdelay(100);
+    dev_sensor_mq2_init();
+    rt_thread_mdelay(500);
+    mqtt_start();
+    rt_thread_mdelay(500);
+    dev_sensor_read_start();
 
     return RT_EOK;
 }

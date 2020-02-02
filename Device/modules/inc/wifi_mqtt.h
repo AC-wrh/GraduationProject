@@ -4,7 +4,7 @@
  * @Author: adol
  * @Date: 2019-11-07 21:03:16
  * @LastEditors  : Please set LastEditors
- * @LastEditTime : 2020-02-01 19:57:30
+ * @LastEditTime : 2020-02-02 14:15:21
  */
 /*
  * Copyright (c) 2006-2018, RT-Thread Development Team
@@ -18,6 +18,10 @@
 
 #ifndef __WIFI_MQTT_H__
 #define __WIFI_MQTT_H__
+
+#ifdef __cplusplus
+ extern "C" {
+#endif
 
 #include <rtthread.h>
 #include <stdint.h>
@@ -71,5 +75,8 @@ extern char *mqtt_message_buffer[DEVICE_MAX];
 
 
 // void iotb_init(void *arg);
+#ifdef __cplusplus
+}
+#endif
 
 #endif

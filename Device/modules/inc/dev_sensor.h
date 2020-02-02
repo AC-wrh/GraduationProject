@@ -3,7 +3,7 @@
  * @version: 
  * @Author: Adol
  * @Date: 2020-01-31 19:37:49
- * @LastEditTime : 2020-02-01 23:03:11
+ * @LastEditTime : 2020-02-02 14:00:54
  */
 #ifndef __DEV_SENSOR_H__
 #define __DEV_SENSOR_H__
@@ -12,7 +12,8 @@
  extern "C" {
 #endif
 
-/* Includes ------------------------------------------------------------------*/
+/* --------------------------------- Includes --------------------------------- */
+
 #include <rtthread.h>
 #include <rtdevice.h>
 #include <rtdef.h>
@@ -25,23 +26,6 @@
 #define PIN_RELAY2      GET_PIN(D, 14)
 #define PIN_BEEP        GET_PIN(D, 15)
 
-/**
- * 2. sht3x sensor
-*/
-#define PIN_I2C1_SCL GET_PIN(B, 8)
-#define PIN_I2C1_SDA GET_PIN(B, 9)
-#define SHT3X_I2C_BUS_NAME "i2c1"
-#define SHT3X_ADDR 0x44
-
-/**
- * 4. sensor data 
-*/
-#define DEV_CLOSE       0
-#define DEV_OPEN        1
-
-/**
- * 5. device status list
-*/
 typedef enum
 {
     DEV_SENSOR_INIT   = 0,
@@ -51,6 +35,24 @@ typedef enum
     DEV_SENSOR_MAX    = 4
 } dev_sensor_t;
 
+typedef struct
+{
+    rt_err_t relay1_status;
+    rt_err_t relay2_status;
+    rt_err_t beep_status;
+} dev_sensor_status_t;
+
+/**
+ * 2. sht3x sensor
+*/
+#define PIN_I2C1_SCL GET_PIN(B, 8)
+#define PIN_I2C1_SDA GET_PIN(B, 9)
+#define SHT3X_I2C_BUS_NAME "i2c1"
+#define SHT3X_ADDR 0x44
+
+/**
+ * 3. sensor data read buffer
+*/
 typedef struct
 {
     float sht3x_data_temp;
@@ -72,13 +74,15 @@ typedef struct
     uint8_t reserved;
 } dev_sensor_data_t;
 
-rt_err_t dev_sensor_beep_ctl(dev_sensor_t beep_t);
+/* --------------------------- Function declaration --------------------------- */
+
 rt_err_t dev_sensor_relay1_ctl(dev_sensor_t relay_t);
 rt_err_t dev_sensor_relay2_ctl(dev_sensor_t relay_t);
 // rt_err_t dev_sensor_relay3_ctl(dev_sensor_t relay_t);
-// rt_err_t dev_sensor_ctl(rt_base_t pin_t, dev_sensor_t status_t);
+rt_err_t dev_sensor_beep_ctl(dev_sensor_t beep_t);
+rt_err_t dev_sensor_ctl(rt_base_t pin_t, dev_sensor_t status_t);
 
-void dev_sensor_read_start(void);
+rt_err_t dev_sensor_init(void);
 
 #ifdef __cplusplus
 }
