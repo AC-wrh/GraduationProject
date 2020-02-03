@@ -4,7 +4,7 @@ const app = getApp()
 
 Page({
   data: {
-    motto: 'Hello World',
+    motto: '智能家居助手',
     userInfo: {},
     hasUserInfo: false,
     canIUse: wx.canIUse('button.open-type.getUserInfo')
@@ -49,6 +49,13 @@ Page({
     this.setData({
       userInfo: e.detail.userInfo,
       hasUserInfo: true
+    })
+  },
+  
+  onClick_jumpToEmqx: function() {
+    //跳转到设置页面
+    wx.navigateTo({
+      url: '../emqx/emqx',
     })
   }
 })

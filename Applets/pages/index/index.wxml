@@ -1,5 +1,8 @@
 <!--index.wxml-->
 <view class="container">
+  <view class="usermotto">
+    <text class="user-motto">{{motto}}</text>
+  </view>
   <view class="userinfo">
     <button wx:if="{{!hasUserInfo && canIUse}}" open-type="getUserInfo" bindgetuserinfo="getUserInfo"> 获取头像昵称 </button>
     <block wx:else>
@@ -7,7 +10,10 @@
       <text class="userinfo-nickname">{{userInfo.nickName}}</text>
     </block>
   </view>
-  <view class="usermotto">
-    <text class="user-motto">{{motto}}</text>
+  <view class="page__bd page__bd_spacing">
+    <button class="weui-btn" type="primary" bindtap='onClick_jumpToEmqx'>设备配置</button>
+  </view>
+  <view class="weui-footer weui-footer_fixed-bottom">
+    <view class="weui-footer__text"> 毕业设计---基于RT-Thread的智能家居系统 @ 温锐豪</view>
   </view>
 </view>

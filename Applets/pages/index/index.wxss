@@ -17,5 +17,9 @@
 }
 
 .usermotto {
-  margin-top: 200px;
+  margin-top: 10px;
+}
+
+.page__bd{
+  margin-top: 80px;
 }
