@@ -82,6 +82,7 @@ rt_err_t dev_sensor_relay2_ctl(dev_sensor_t relay_t);
 rt_err_t dev_sensor_beep_ctl(dev_sensor_t beep_t);
 rt_err_t dev_sensor_ctl(rt_base_t pin_t, dev_sensor_t status_t);
 
+void dev_sensor_data_read(void);
 rt_err_t dev_sensor_init(void);
 
 #ifdef __cplusplus

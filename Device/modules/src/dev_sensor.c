@@ -1,9 +1,9 @@
 /*
- * @Description: sensor 
- * @version: 
+ * @Description: sensor device control
+ * @version: 1.0
  * @Author: Adol
  * @Date: 2020-01-31 19:37:41
- * @LastEditTime : 2020-02-02 14:18:31
+ * @LastEditTime : 2020-02-03 13:44:40
  */
 #include <board.h>
 
@@ -226,6 +226,17 @@ rt_err_t dev_sensor_mq2_init(void)
 /**
  * 5. sensor data 
 */
+char dev_sensor_data[100];
+char dev_sensor_data_buffer[100];
+
+
+
+float sht3x_temp;
+float sht3x_humi;
+unsigned int mq2_data;
+
+int mqtt_buffer_len = 0;
+
 dev_sensor_data_t dev_sensor_data_result = {
     .sht3x_data_temp = 0.0f,
     .sht3x_data_humi = 0.0f,
@@ -240,12 +251,31 @@ dev_sensor_data_t dev_sensor_data_result = {
     .relay2_status = DEV_SENSOR_DEINIT,
     .beep_status = DEV_SENSOR_DEINIT,
 
-    .status = -RT_ERROR};
+    .status = 0};
+
+// void dev_sensor_read_buffer(void)
+// {
+//     if (dev_sensor_data_result.status)
+//     {
+        
+//         dev_sensor_data_buffer[0] = dev_sensor_data_result.sht3x_data_temp;
+//         dev_sensor_data_buffer[1] = dev_sensor_data_result.sht3x_data_humi;
+//         dev_sensor_data_buffer[2] = dev_sensor_data_result.mq2_data;
+        
+//         sprintf(dev_sensor_data, "DSD_%s_%s", dev_sensor_data_buffer[0], dev_sensor_data_buffer[1]);
+//         rt_kprintf(dev_sensor_data);
+        
+
+
+
+//     }
+    
+// }
 
 void dev_sensor_data_upload(dev_sensor_data_t *in_data, dev_sensor_data_t *out_data)
 {
     rt_base_t level = rt_hw_interrupt_disable();
-
+    
     out_data->sht3x_data_temp = in_data->sht3x_data_temp;
     out_data->sht3x_data_humi = in_data->sht3x_data_humi;
     out_data->mq2_data = in_data->mq2_data;
@@ -254,18 +284,20 @@ void dev_sensor_data_upload(dev_sensor_data_t *in_data, dev_sensor_data_t *out_d
     out_data->sht3x_status = in_data->sht3x_status;
     out_data->mq2_status = in_data->mq2_status;
     out_data->zph02_status = in_data->zph02_status;
-
     out_data->relay1_status = in_data->relay1_status;
     out_data->relay2_status = in_data->relay2_status;
     out_data->beep_status = in_data->beep_status;
-
+    
     rt_hw_interrupt_enable(level);
 }
+
+
 
 void dev_sensor_data_read(void)
 {
     dev_sensor_data_t sensor_data;
 
+    dev_sensor_data_result.status = 0;
     dev_sensor_data_upload(&dev_sensor_data_result, &sensor_data);
 
     if (dev_sht3x_inited == 0)
@@ -335,8 +367,30 @@ void dev_sensor_data_read(void)
     {
         sensor_data.beep_status = dev_sensor_status_result.beep_status;
     }
-    
+
     dev_sensor_data_upload(&sensor_data, &dev_sensor_data_result);
+    dev_sensor_data_result.status = 1;
+    // rt_thread_mdelay(10);
+    // dev_sensor_read_buffer();
+
+    if (dev_sensor_data_result.status)
+    {
+        
+        
+        rt_sprintf(dev_sensor_data, "DSD_%d.%d_%d.%d_%d\n", (int)dev_sensor_data_result.sht3x_data_temp,
+                                                            (int)(dev_sensor_data_result.sht3x_data_temp * 10) % 10,
+                                                            (int)dev_sensor_data_result.sht3x_data_humi, 
+                                                            (int)(dev_sensor_data_result.sht3x_data_humi * 10) % 10,
+                                                            (int)dev_sensor_data_result.mq2_data);
+        rt_kprintf(dev_sensor_data);
+        
+
+
+
+    }
+
+
+    
 }
 
 static void _dev_sensor_read_thr(void *arg)
@@ -354,7 +408,7 @@ void dev_sensor_read_start(void)
     sensor_read_thr = rt_thread_create("sensor",
                                        _dev_sensor_read_thr,
                                        RT_NULL,
-                                       2048, 12, 10);
+                                       1024, 12, 10);
     if (sensor_read_thr != RT_NULL)
     {
         rt_thread_startup(sensor_read_thr);
