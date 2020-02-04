@@ -3,7 +3,7 @@
  * @version: 
  * @Author: Adol
  * @Date: 2020-01-28 18:51:13
- * @LastEditTime : 2020-02-02 16:58:27
+ * @LastEditTime : 2020-02-04 21:36:38
  */
 
 #include <board.h>
@@ -45,14 +45,15 @@ char *mqtt_message_buffer[DEVICE_MAX] =
         enum2str(APPLETS_OFFLINE),
         enum2str(DEVICE_ONLINE),
         enum2str(DEVICE_OFFLINE),
-        enum2str(DEVICE_DATA),
-
-        enum2str(SWITCH_1_ON),
-        enum2str(SWITCH_1_OFF),
-        enum2str(SWITCH_2_ON),
-        enum2str(SWITCH_2_OFF),
-        enum2str(SWITCH_3_ON),
-        enum2str(SWITCH_3_OFF)
+        
+        enum2str(DEVICE_SENSOR_ALL),
+        enum2str(DEVICE_SENSOR_DATA),
+        enum2str(RELAY_1_ON),
+        enum2str(RELAY_1_OFF),
+        enum2str(RELAY_2_ON),
+        enum2str(RELAY_2_OFF),
+        enum2str(BEEP_ON),
+        enum2str(BEEP_OFF)
 };
 
 /* define MQTT client context */
@@ -70,41 +71,39 @@ static void mqtt_sub_callback(MQTTClient *c, MessageData *msg_data)
 
     if (!(strcmp(((char *)msg_data->message->payload), mqtt_message_buffer[APPLETS_ONLINE])))
     {
-        // mqtt_publish(mqtt_senson_data);
+        mqtt_publish(dev_sensor_all);
     }
-    else if (!(strcmp(((char *)msg_data->message->payload), mqtt_message_buffer[DEVICE_DATA])))
+    else if (!(strcmp(((char *)msg_data->message->payload), mqtt_message_buffer[DEVICE_SENSOR_ALL])))
     {
-        // mqtt_publish(mqtt_senson_data);
+        mqtt_publish(dev_sensor_all);
     }
-    else if (!(strcmp(((char *)msg_data->message->payload), mqtt_message_buffer[SWITCH_1_ON])))
+    else if (!(strcmp(((char *)msg_data->message->payload), mqtt_message_buffer[DEVICE_SENSOR_DATA])))
+    {
+        mqtt_publish(dev_sensor_data);
+    }
+    else if (!(strcmp(((char *)msg_data->message->payload), mqtt_message_buffer[RELAY_1_ON])))
     {
         dev_sensor_relay1_ctl(DEV_SENSOR_OPEN);
-        mqtt_publish(mqtt_message_buffer[SWITCH_1_ON]);
     }
-    else if (!(strcmp(((char *)msg_data->message->payload), mqtt_message_buffer[SWITCH_1_OFF])))
+    else if (!(strcmp(((char *)msg_data->message->payload), mqtt_message_buffer[RELAY_1_OFF])))
     {
         dev_sensor_relay1_ctl(DEV_SENSOR_CLOSE);
-        mqtt_publish(mqtt_message_buffer[SWITCH_1_OFF]);
     }
-    else if (!(strcmp(((char *)msg_data->message->payload), mqtt_message_buffer[SWITCH_2_ON])))
+    else if (!(strcmp(((char *)msg_data->message->payload), mqtt_message_buffer[RELAY_2_ON])))
     {
         dev_sensor_relay2_ctl(DEV_SENSOR_OPEN);
-        mqtt_publish(mqtt_message_buffer[SWITCH_2_ON]);
     }
-    else if (!(strcmp(((char *)msg_data->message->payload), mqtt_message_buffer[SWITCH_2_OFF])))
+    else if (!(strcmp(((char *)msg_data->message->payload), mqtt_message_buffer[RELAY_2_OFF])))
     {
         dev_sensor_relay2_ctl(DEV_SENSOR_CLOSE);
-        mqtt_publish(mqtt_message_buffer[SWITCH_2_OFF]);
     }
-    else if (!(strcmp(((char *)msg_data->message->payload), mqtt_message_buffer[SWITCH_3_ON])))
+    else if (!(strcmp(((char *)msg_data->message->payload), mqtt_message_buffer[BEEP_ON])))
     {
         dev_sensor_beep_ctl(DEV_SENSOR_OPEN);
-        mqtt_publish(mqtt_message_buffer[SWITCH_3_ON]);
     }
-    else if (!(strcmp(((char *)msg_data->message->payload), mqtt_message_buffer[SWITCH_3_OFF])))
+    else if (!(strcmp(((char *)msg_data->message->payload), mqtt_message_buffer[BEEP_OFF])))
     {
         dev_sensor_beep_ctl(DEV_SENSOR_CLOSE);
-        mqtt_publish(mqtt_message_buffer[SWITCH_3_OFF]);
     }
 }
 

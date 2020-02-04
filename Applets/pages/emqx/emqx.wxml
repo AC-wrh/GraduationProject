@@ -1,79 +1,111 @@
 <view class="page">
-    <view class="page__hd">
-        <view class="page__title">Flex</view>
-        <view class="page__desc">Flex布局</view>
-    </view>
-    <view class="page__bd page__bd_spacing">
-        <view class="weui-flex">
-            <view class="weui-flex__item"><view class="placeholder">weui</view></view>
-            <view class="weui-flex__item"><view class="placeholder">weui</view></view>
-        </view>
-        <view class="weui-flex">
-            <view class="weui-flex__item"><view class="placeholder">weui</view></view>
-            <view class="weui-flex__item"><view class="placeholder">weui</view></view>
-            <view class="weui-flex__item"><view class="placeholder">weui</view></view>
-            <view class="weui-flex__item"><view class="placeholder">weui</view></view>
-        </view>
-        
-    </view>
-</view>
-<view class="page">
   <view class="weui-cells__title">环境信息</view>
-  <view class="page__bd page__bd_spacing"> 
+  <view class="page__bd page__bd_spacing">
     <view class="weui-flex">
-      <view class="weui-flex__item"><view class="placeholder">{{Sht3x_Temperature}}</view></view>
+      <view class="weui-flex__item">
+        <view class="environmental_information">温度：{{sht3x_temp_value}}</view>
+      </view>
     </view>
     <view class="weui-flex">
-      <view class="weui-flex__item"><view class="placeholder">{{Sht3x_HumiditySensor}}</view></view>
+      <view class="weui-flex__item">
+        <view class="environmental_information">湿度：{{sht3x_humi_value}}</view>
+      </view>
     </view>
     <view class="weui-flex">
-      <view class="weui-flex__item"><view class="placeholder">{{Mq2_Value}}</view></view>
+      <view class="weui-flex__item">
+        <view class="environmental_information">天然气浓度：{{mq2_value}}</view>
+      </view>
     </view>
     <view class="weui-flex">
-      <view class="weui-flex__item"><view class="placeholder">{{Zph02_Value}}</view></view>
+      <view class="weui-flex__item">
+        <view class="environmental_information">PM2.5浓度：{{zph02_value}}</view>
+      </view>
     </view>
-
   </view>
   <view class="weui-cells__title">设备控制</view>
-  <view class="page__bd page__bd_spacing"> 
+  <view class="page__bd page__bd_spacing">
     <view class="weui-flex">
-      <view class="weui-flex__item"><view class="placeholder">设备名称</view></view>
-      <view class="weui-flex__item"><view class="placeholder">当前状态</view></view>
-      <view class="weui-flex__item"><view class="placeholder"></view></view>
-      <view class="weui-flex__item"><view class="placeholder"></view></view>
-    </view>
-    <view class="weui-flex">
-      <view class="weui-flex__item"><view class="placeholder" >开关1</view></view>
-      <view class="weui-flex__item"><view class="placeholder">{{Relay1_Status}}</view></view>
       <view class="weui-flex__item">
-        <button class="placeholder" type="primary" bindtap='onClick_switch1on'>开</button>
+        <view class="device_status">设备名</view>
       </view>
       <view class="weui-flex__item">
-        <button class="placeholder" type="warn" bindtap='onClick_switch1off'>关</button>
-      </view>
-    </view>
-    <view class="weui-flex">
-      <view class="weui-flex__item"><view class="placeholder" >开关2</view></view>
-      <view class="weui-flex__item"><view class="placeholder">{{Relay2_Status}}</view></view>
-      <view class="weui-flex__item">
-        <button class="placeholder" type="primary" bindtap='onClick_switch2on'>开</button>
+        <view class="device_status">当前状态</view>
       </view>
       <view class="weui-flex__item">
-        <button class="placeholder" type="warn" bindtap='onClick_switch2off'>关</button>
+        <view class="device_status"></view>
+      </view>
+      <view class="weui-flex__item">
+        <view class="device_status"></view>
       </view>
     </view>
     <view class="weui-flex">
-      <view class="weui-flex__item"><view class="placeholder" >开关3</view></view>
-      <view class="weui-flex__item"><view class="placeholder">{{Beep_Status}}</view></view>
       <view class="weui-flex__item">
-        <button class="placeholder" type="primary" bindtap='onClick_switch3on'>开</button>
+        <view class="device_status">开关1</view>
       </view>
       <view class="weui-flex__item">
-        <button class="placeholder" type="warn" bindtap='onClick_switch3off'>关</button>
+        <view class="device_status">{{relay1_status}}</view>
+      </view>
+      <view class="weui-flex__item">
+        <view class="device_status">
+          <view class="button-sp-area">
+            <button class="weui-btn mini-btn" type="primary" size="mini" bindtap='onClick_relay1_on'>开</button>
+          </view>
+        </view>
+      </view>
+      <view class="weui-flex__item">
+        <view class="device_status">
+          <view class="button-sp-area">
+            <button class="weui-btn mini-btn" type="warn" size="mini" bindtap='onClick_relay1_off'>关</button>
+          </view>
+        </view>
       </view>
     </view>
-  </view>
+    <view class="weui-flex">
+      <view class="weui-flex__item">
+        <view class="device_status">开关2</view>
+      </view>
+      <view class="weui-flex__item">
+        <view class="device_status">{{relay2_status}}</view>
+      </view>
+      <view class="weui-flex__item">
+        <view class="device_status">
+          <view class="button-sp-area">
+            <button class="weui-btn mini-btn" type="primary" size="mini" bindtap='onClick_relay2_on'>开</button>
+          </view>
+        </view>
+      </view>
+      <view class="weui-flex__item">
+        <view class="device_status">
+          <view class="button-sp-area">
+            <button class="weui-btn mini-btn" type="warn" size="mini" bindtap='onClick_relay2_off'>关</button>
+          </view>
+        </view>
+      </view>
+    </view>
+    <view class="weui-flex">
+      <view class="weui-flex__item">
+        <view class="device_status">蜂鸣器</view>
+      </view>
+      <view class="weui-flex__item">
+        <view class="device_status">{{beep_status}}</view>
+      </view>
+      <view class="weui-flex__item">
+        <view class="device_status">
+          <view class="button-sp-area">
+            <button class="weui-btn mini-btn" type="primary" size="mini" bindtap='onClick_beep_on'>开</button>
+          </view>
+        </view>
+      </view>
+      <view class="weui-flex__item">
+        <view class="device_status">
+          <view class="button-sp-area">
+            <button class="weui-btn mini-btn" type="warn" size="mini" bindtap='onClick_beep_off'>关</button>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view> 
   <view class="weui-footer weui-footer_fixed-bottom">
-    <view class="weui-footer__text"> 毕业设计---基于RT-Thread的智能家居系统 © 温锐豪</view>
+    <view class="weui-footer__text"> 毕业设计---基于RT-Thread的智能家居系统 @ 温锐豪</view>
   </view>
 </view>

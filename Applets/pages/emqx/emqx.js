@@ -6,6 +6,7 @@ const host = 'wxs://www.wenruihao.com/mqtt'
 
 var mqttInit = 0
 var timer
+var timer_count = 0
 var message
 var messageBuffer = new Array()
 
@@ -18,13 +19,13 @@ Page({
     client: null,
     //记录重连的次数
     //reconnectCounts: 0,
-    Sht3x_Temperature: "温度：-- ℃",
-    Sht3x_HumiditySensor: "湿度：-- %",
-    Mq2_Value: "天然气浓度：--",
-    Zph02_Value: "PM2.5：--",
-    Relay1_Status: "---",
-    Relay2_Status: "---",
-    Beep_Status: "---",
+    sht3x_temp_value: "-- ℃",
+    sht3x_humi_value: "-- %",
+    mq2_value: "--",
+    zph02_value: "--",
+    relay1_status: "---",
+    relay2_status: "---",
+    beep_status: "---",
 
     //MQTT连接的配置
     options: {
@@ -45,7 +46,7 @@ Page({
       // will: {
       //   topic: 'Device',
       //   payload: 'Connection Closed abnormally..!',
-      //   qos: 0,
+      //   qos: 1,
       //   retain: false
       // },
       username: 'Applets',
@@ -64,16 +65,30 @@ Page({
     this.data.client = mqtt.connect(host, this.data.options)
     this.data.client.on('connect', function (connack) {
       wx.showToast({
-        title: '服务连接成功'
+        title: '设备连接成功'
       })
     })
     mqttInit = 1
-    this.data.client.publish('Applets', 'APPLETS_ONLINE', { qos: 0, retain: false })
+    
 
     timer = setInterval(function () {
-      that.data.client.publish('Applets', 'DEVICE_DATA', { qos: 0, retain: false })
+      timer_count++
+      if (timer_count === 5) {
+        that.data.client.publish('Applets', 'DEVICE_SENSOR_ALL', { qos: 1, retain: false })
+        timer_count = 0
+      } else {
+        that.data.client.publish('Applets', 'DEVICE_SENSOR_DATA', { qos: 1, retain: false })
+      }
     }, 2000)
 
+    // timer = setInterval(function () {
+    //   that.data.client.publish('Applets', 'DEVICE_SENSOR_DATA', { qos: 1, retain: false })
+    // }, 2000)
+
+    // timer = setInterval(function () {
+    //   that.data.client.publish('Applets', 'DEVICE_SENSOR_STATUS', { qos: 1, retain: false })
+    // }, 9000)
+    
     //接收到订阅主题的消息的回调函数
     that.data.client.on("message", function (topic, payload) {
       /*
@@ -93,55 +108,79 @@ Page({
         "4:" + messageBuffer[4],
         "5:" + messageBuffer[5],
         "6:" + messageBuffer[6],
-        "7:" + messageBuffer[7],
-        "8:" + messageBuffer[8])
+        "7:" + messageBuffer[7])
+
+      
 
       switch (message) {
 
         case "DEVICE_ONLINE":
-          that.data.client.publish('Applets', 'DEVICE_DATA', { qos: 0, retain: false })
+          that.data.client.publish('Applets', 'DEVICE_SENSOR_ALL', { qos: 1, retain: false })
           console.log("DEVICE_ONLINE")
           break
 
-        case "SWITCH_1_ON":
-          that.setData({ Switch1Status: messageBuffer[2] })
-          console.log("SWITCH_1_ON")
+        case "RELAY_1_ON":
+          that.setData({ relay1_status: messageBuffer[2] })
+          console.log("RELAY_1_ON")
           break
 
-        case "SWITCH_1_OFF":
-          that.setData({ Switch1Status: messageBuffer[2] })
-          console.log("SWITCH_1_OFF")
+        case "RELAY_1_OFF":
+          that.setData({ relay1_status: messageBuffer[2] })
+          console.log("RELAY_1_OFF")
           break
 
-        case "SWITCH_2_ON":
-          that.setData({ Switch2Status: messageBuffer[2] })
-          console.log("SWITCH_2_ON")
+        case "RELAY_2_ON":
+          that.setData({ relay2_status: messageBuffer[2] })
+          console.log("RELAY_2_ON")
           break
 
-        case "SWITCH_2_OFF":
-          that.setData({ Switch2Status: messageBuffer[2] })
-          console.log("SWITCH_2_OFF")
+        case "RELAY_2_OFF":
+          that.setData({ relay2_status: messageBuffer[2] })
+          console.log("RELAY_2_OFF")
           break
 
-        case "SWITCH_3_ON":
-          that.setData({ Switch3Status: messageBuffer[2] })
-          console.log("SWITCH_3_ON")
+        case "BEEP_ON":
+          that.setData({ beep_status: messageBuffer[1] })
+          console.log("BEEP_ON")
           break
 
-        case "SWITCH_3_OFF":
-          that.setData({ Switch3Status: messageBuffer[2] })
-          console.log("SWITCH_3_OFF")
+        case "BEEP_OFF":
+          that.setData({ beep_status: messageBuffer[1] })
+          console.log("BEEP_OFF")
           break
 
         default:
-          that.setData({ TemperatureSensor: messageBuffer[2] + "℃" })
-          that.setData({ HumiditySensor: messageBuffer[3] + "%" })
-          that.setData({ LightSensor: messageBuffer[4] + "lux" })
-          that.setData({ GasSensor: messageBuffer[5] + "ps" })
-          that.setData({ Switch1Status: messageBuffer[6] })
-          that.setData({ Switch2Status: messageBuffer[7] })
-          that.setData({ Switch3Status: messageBuffer[8] })
-          console.log("default")
+          if (messageBuffer[0] === "D$S-A") {
+            that.setData({ sht3x_temp_value: messageBuffer[1] + "℃" })
+            that.setData({ sht3x_humi_value: messageBuffer[2] + "%" })
+            that.setData({ mq2_value: messageBuffer[3] + "lux" })
+            that.setData({ zph02_value: messageBuffer[4] + "ps" })
+            if (messageBuffer[5] === "2") {
+              that.setData({ relay1_status: "ON" })
+            } else {
+              that.setData({ relay1_status: "OFF" })
+            }
+            
+            if (messageBuffer[6] === "2") {
+              that.setData({ relay2_status: "ON" })
+            } else {
+              that.setData({ relay2_status: "OFF" })
+            }
+    
+            if (messageBuffer[7] === "2") {
+              that.setData({ beep_status: "ON" })
+            } else {
+              that.setData({ beep_status: "OFF" })
+            }
+          }
+          
+          if (messageBuffer[0] === "D$S-D") {
+            that.setData({ sht3x_temp_value: messageBuffer[1] + "℃" })
+            that.setData({ sht3x_humi_value: messageBuffer[2] + "%" })
+            that.setData({ mq2_value: messageBuffer[3] + "lux" })
+            that.setData({ zph02_value: messageBuffer[4] + "ps" })
+          }
+
           break
       }
     })
@@ -178,7 +217,16 @@ Page({
    */
   onShow: function () {
     console.log("进入")
-    
+    this.data.client.publish('Applets', 'APPLETS_ONLINE', { qos: 1, retain: false })
+    // timer = setInterval(function () {
+    //   timer_count++
+    //   if (timer_count === 5) {
+    //     that.data.client.publish('Applets', 'DEVICE_SENSOR_ALL', { qos: 1, retain: false })
+    //     timer_count = 0
+    //   } else {
+    //     that.data.client.publish('Applets', 'DEVICE_SENSOR_DATA', { qos: 1, retain: false })
+    //   }
+    // }, 2000)
   },
 
   /**
@@ -194,7 +242,7 @@ Page({
    */
   onUnload: function () {
     console.log("退出")
-    this.data.client.publish('Applets', 'APPLETS_OFFLINE', { qos: 0, retain: false })
+    this.data.client.publish('Applets', 'APPLETS_OFFLINE', { qos: 1, retain: false })
     clearInterval(timer)
   },
 
@@ -220,21 +268,12 @@ Page({
   },
 
   /**
-   * 定时器事件
-   */
-  timer_callback: function () {
-    this.data.client.publish('Applets', 'DEVICE_DATA', { qos: 0, retain: false })
-  },
-
-
-
-  /**
    * 按键点击事件
    */
-  onClick_switch1on: function () {
+  onClick_relay1_on: function () {
     //switch1开启
     if (this.data.client && this.data.client.connected) {
-      this.data.client.publish('Applets', 'SWITCH_1_ON', { qos: 0, retain: false })
+      this.data.client.publish('Applets', 'RELAY_1_ON', { qos: 1, retain: false })
       wx.showToast({
         title: '发布成功'
       })
@@ -248,10 +287,10 @@ Page({
     //this.setData({ Switch1Status: 'on' })
   },
 
-  onClick_switch1off: function () {
+  onClick_relay1_off: function () {
     //switch1关闭
     if (this.data.client && this.data.client.connected) {
-      this.data.client.publish('Applets', 'SWITCH_1_OFF', { qos: 0, retain: false })
+      this.data.client.publish('Applets', 'RELAY_1_OFF', { qos: 1, retain: false })
       wx.showToast({
         title: '发布成功'
       })
@@ -264,10 +303,10 @@ Page({
     }
   },
 
-  onClick_switch2on: function () {
+  onClick_relay2_on: function () {
     //switch2开启
     if (this.data.client && this.data.client.connected) {
-      this.data.client.publish('Applets', 'SWITCH_2_ON', { qos: 0, retain: false })
+      this.data.client.publish('Applets', 'RELAY_2_ON', { qos: 1, retain: false })
       wx.showToast({
         title: '发布成功'
       })
@@ -280,10 +319,10 @@ Page({
     }
   },
 
-  onClick_switch2off: function () {
+  onClick_relay2_off: function () {
     //switch2关闭
     if (this.data.client && this.data.client.connected) {
-      this.data.client.publish('Applets', 'SWITCH_2_OFF', { qos: 0, retain: false })
+      this.data.client.publish('Applets', 'RELAY_2_OFF', { qos: 1, retain: false })
       wx.showToast({
         title: '发布成功'
       })
@@ -296,10 +335,10 @@ Page({
     }
   },
 
-  onClick_switch3on: function () {
+  onClick_beep_on: function () {
     //switch3开启
     if (this.data.client && this.data.client.connected) {
-      this.data.client.publish('Applets', 'SWITCH_3_ON', { qos: 0, retain: false })
+      this.data.client.publish('Applets', 'BEEP_ON', { qos: 1, retain: false })
       wx.showToast({
         title: '发布成功'
       })
@@ -312,10 +351,10 @@ Page({
     }
   },
 
-  onClick_switch3off: function () {
+  onClick_beep_off: function () {
     //switch3关闭
     if (this.data.client && this.data.client.connected) {
-      this.data.client.publish('Applets', 'SWITCH_3_OFF', { qos: 0, retain: false })
+      this.data.client.publish('Applets', 'BEEP_OFF', { qos: 1, retain: false })
       wx.showToast({
         title: '发布成功'
       })

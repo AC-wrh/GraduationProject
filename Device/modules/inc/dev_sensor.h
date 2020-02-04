@@ -3,7 +3,7 @@
  * @version: 
  * @Author: Adol
  * @Date: 2020-01-31 19:37:49
- * @LastEditTime : 2020-02-02 14:00:54
+ * @LastEditTime : 2020-02-04 19:06:56
  */
 #ifndef __DEV_SENSOR_H__
 #define __DEV_SENSOR_H__
@@ -84,6 +84,9 @@ rt_err_t dev_sensor_ctl(rt_base_t pin_t, dev_sensor_t status_t);
 
 void dev_sensor_data_read(void);
 rt_err_t dev_sensor_init(void);
+
+extern char dev_sensor_all[100];
+extern char dev_sensor_data[100];
 
 #ifdef __cplusplus
 }

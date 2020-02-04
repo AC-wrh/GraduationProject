@@ -64,9 +64,19 @@
   height: auto;
 }
 
-.placeholder{
+.device_status{
     margin: 5px;
-    padding: 0 10px;
+    padding: 0 5px;
+    text-align: center;
+    background-color: #FFFFFF;
+    height: 2.3em;
+    line-height: 2.3em;
+    color: rgb(0, 0, 0);
+}
+
+.environmental_information{
+    margin: 5px;
+    padding: 0 5px;
     text-align: left;
     background-color: #FFFFFF;
     height: 2.3em;

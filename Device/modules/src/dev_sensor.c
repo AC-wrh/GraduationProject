@@ -3,7 +3,7 @@
  * @version: 1.0
  * @Author: Adol
  * @Date: 2020-01-31 19:37:41
- * @LastEditTime : 2020-02-03 13:44:40
+ * @LastEditTime : 2020-02-04 20:46:22
  */
 #include <board.h>
 
@@ -11,14 +11,25 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
+dev_sensor_data_t dev_sensor_data_result = {
+    .sht3x_data_temp = 0.0f,
+    .sht3x_data_humi = 0.0f,
+    .mq2_data = 0,
+    .zph02_data = 0,
+
+    .sht3x_status = DEV_SENSOR_DEINIT,
+    .mq2_status = DEV_SENSOR_DEINIT,
+    .zph02_status = DEV_SENSOR_DEINIT,
+
+    .relay1_status = DEV_SENSOR_DEINIT,
+    .relay2_status = DEV_SENSOR_DEINIT,
+    .beep_status = DEV_SENSOR_DEINIT,
+
+    .status = 0};
+
 /**
  * 1. relay and beep device control
 */
-dev_sensor_status_t dev_sensor_status_result = {
-    .relay1_status = DEV_SENSOR_DEINIT,
-    .relay2_status = DEV_SENSOR_DEINIT,
-    .beep_status = DEV_SENSOR_DEINIT};
-
 rt_err_t dev_sensor_relay1_ctl(dev_sensor_t relay_t)
 {
     switch (relay_t)
@@ -27,19 +38,21 @@ rt_err_t dev_sensor_relay1_ctl(dev_sensor_t relay_t)
         /* set the pin mode to push-pull output */
         rt_pin_mode(PIN_RELAY1, PIN_MODE_OUTPUT);
         rt_pin_write(PIN_RELAY1, PIN_HIGH);
-        dev_sensor_status_result.relay1_status = DEV_SENSOR_CLOSE;
+        dev_sensor_data_result.relay1_status = DEV_SENSOR_CLOSE;
         break;
     case DEV_SENSOR_DEINIT:
         rt_pin_write(PIN_RELAY1, PIN_HIGH);
-        dev_sensor_status_result.relay1_status = DEV_SENSOR_CLOSE;
+        dev_sensor_data_result.relay1_status = DEV_SENSOR_CLOSE;
         break;
     case DEV_SENSOR_OPEN:
         rt_pin_write(PIN_RELAY1, PIN_LOW);
-        dev_sensor_status_result.relay1_status = DEV_SENSOR_OPEN;
+        dev_sensor_data_result.relay1_status = DEV_SENSOR_OPEN;
+        mqtt_publish(mqtt_message_buffer[RELAY_1_ON]);
         break;
     case DEV_SENSOR_CLOSE:
         rt_pin_write(PIN_RELAY1, PIN_HIGH);
-        dev_sensor_status_result.relay1_status = DEV_SENSOR_CLOSE;
+        dev_sensor_data_result.relay1_status = DEV_SENSOR_CLOSE;
+        mqtt_publish(mqtt_message_buffer[RELAY_1_OFF]);
         break;
     default:
         break;
@@ -56,19 +69,21 @@ rt_err_t dev_sensor_relay2_ctl(dev_sensor_t relay_t)
         /* set the pin mode to push-pull output */
         rt_pin_mode(PIN_RELAY2, PIN_MODE_OUTPUT);
         rt_pin_write(PIN_RELAY2, PIN_HIGH);
-        dev_sensor_status_result.relay2_status = DEV_SENSOR_CLOSE;
+        dev_sensor_data_result.relay2_status = DEV_SENSOR_CLOSE;
         break;
     case DEV_SENSOR_DEINIT:
         rt_pin_write(PIN_RELAY2, PIN_HIGH);
-        dev_sensor_status_result.relay2_status = DEV_SENSOR_CLOSE;
+        dev_sensor_data_result.relay2_status = DEV_SENSOR_CLOSE;
         break;
     case DEV_SENSOR_OPEN:
         rt_pin_write(PIN_RELAY2, PIN_LOW);
-        dev_sensor_status_result.relay2_status = DEV_SENSOR_OPEN;
+        dev_sensor_data_result.relay2_status = DEV_SENSOR_OPEN;
+        mqtt_publish(mqtt_message_buffer[RELAY_2_ON]);
         break;
     case DEV_SENSOR_CLOSE:
         rt_pin_write(PIN_RELAY2, PIN_HIGH);
-        dev_sensor_status_result.relay2_status = DEV_SENSOR_CLOSE;
+        dev_sensor_data_result.relay2_status = DEV_SENSOR_CLOSE;
+        mqtt_publish(mqtt_message_buffer[RELAY_2_OFF]);
         break;
     default:
         break;
@@ -85,19 +100,21 @@ rt_err_t dev_sensor_beep_ctl(dev_sensor_t beep_t)
         /* set the pin mode to push-pull output */
         rt_pin_mode(PIN_BEEP, PIN_MODE_OUTPUT);
         rt_pin_write(PIN_BEEP, PIN_HIGH);
-        dev_sensor_status_result.beep_status = DEV_SENSOR_CLOSE;
+        dev_sensor_data_result.beep_status = DEV_SENSOR_CLOSE;
         break;
     case DEV_SENSOR_DEINIT:
         rt_pin_write(PIN_BEEP, PIN_HIGH);
-        dev_sensor_status_result.beep_status = DEV_SENSOR_CLOSE;
+        dev_sensor_data_result.beep_status = DEV_SENSOR_CLOSE;
         break;
     case DEV_SENSOR_OPEN:
         rt_pin_write(PIN_BEEP, PIN_LOW);
-        dev_sensor_status_result.beep_status = DEV_SENSOR_OPEN;
+        dev_sensor_data_result.beep_status = DEV_SENSOR_OPEN;
+        mqtt_publish(mqtt_message_buffer[BEEP_ON]);
         break;
     case DEV_SENSOR_CLOSE:
         rt_pin_write(PIN_BEEP, PIN_HIGH);
-        dev_sensor_status_result.beep_status = DEV_SENSOR_CLOSE;
+        dev_sensor_data_result.beep_status = DEV_SENSOR_CLOSE;
+        mqtt_publish(mqtt_message_buffer[BEEP_OFF]);
         break;
     default:
         break;
@@ -226,51 +243,31 @@ rt_err_t dev_sensor_mq2_init(void)
 /**
  * 5. sensor data 
 */
+char dev_sensor_all[100];
 char dev_sensor_data[100];
-char dev_sensor_data_buffer[100];
 
+void dev_sensor_mqtt_buffer(void)
+{
+    if (dev_sensor_data_result.status)
+    {
+        rt_sprintf(dev_sensor_all, "D$S-A_%d.%d_%d.%d_%d_%d_%d_%d_%d\n", (int)dev_sensor_data_result.sht3x_data_temp,
+                                                                        (int)(dev_sensor_data_result.sht3x_data_temp * 10) % 10,
+                                                                        (int)dev_sensor_data_result.sht3x_data_humi, 
+                                                                        (int)(dev_sensor_data_result.sht3x_data_humi * 10) % 10,
+                                                                        (int)dev_sensor_data_result.mq2_data,
+                                                                        0,
+                                                                        (int)dev_sensor_data_result.relay1_status,
+                                                                        (int)dev_sensor_data_result.relay2_status,
+                                                                        (int)dev_sensor_data_result.beep_status);
 
-
-float sht3x_temp;
-float sht3x_humi;
-unsigned int mq2_data;
-
-int mqtt_buffer_len = 0;
-
-dev_sensor_data_t dev_sensor_data_result = {
-    .sht3x_data_temp = 0.0f,
-    .sht3x_data_humi = 0.0f,
-    .mq2_data = 0,
-    .zph02_data = 0,
-
-    .sht3x_status = DEV_SENSOR_DEINIT,
-    .mq2_status = DEV_SENSOR_DEINIT,
-    .zph02_status = DEV_SENSOR_DEINIT,
-
-    .relay1_status = DEV_SENSOR_DEINIT,
-    .relay2_status = DEV_SENSOR_DEINIT,
-    .beep_status = DEV_SENSOR_DEINIT,
-
-    .status = 0};
-
-// void dev_sensor_read_buffer(void)
-// {
-//     if (dev_sensor_data_result.status)
-//     {
-        
-//         dev_sensor_data_buffer[0] = dev_sensor_data_result.sht3x_data_temp;
-//         dev_sensor_data_buffer[1] = dev_sensor_data_result.sht3x_data_humi;
-//         dev_sensor_data_buffer[2] = dev_sensor_data_result.mq2_data;
-        
-//         sprintf(dev_sensor_data, "DSD_%s_%s", dev_sensor_data_buffer[0], dev_sensor_data_buffer[1]);
-//         rt_kprintf(dev_sensor_data);
-        
-
-
-
-//     }
-    
-// }
+        rt_sprintf(dev_sensor_data, "D$S-D_%d.%d_%d.%d_%d_%d\n", (int)dev_sensor_data_result.sht3x_data_temp,
+                                                                (int)(dev_sensor_data_result.sht3x_data_temp * 10) % 10,
+                                                                (int)dev_sensor_data_result.sht3x_data_humi, 
+                                                                (int)(dev_sensor_data_result.sht3x_data_humi * 10) % 10,
+                                                                (int)dev_sensor_data_result.mq2_data,
+                                                                0);
+    }
+}
 
 void dev_sensor_data_upload(dev_sensor_data_t *in_data, dev_sensor_data_t *out_data)
 {
@@ -280,13 +277,6 @@ void dev_sensor_data_upload(dev_sensor_data_t *in_data, dev_sensor_data_t *out_d
     out_data->sht3x_data_humi = in_data->sht3x_data_humi;
     out_data->mq2_data = in_data->mq2_data;
     out_data->zph02_data = in_data->zph02_data;
-
-    out_data->sht3x_status = in_data->sht3x_status;
-    out_data->mq2_status = in_data->mq2_status;
-    out_data->zph02_status = in_data->zph02_status;
-    out_data->relay1_status = in_data->relay1_status;
-    out_data->relay2_status = in_data->relay2_status;
-    out_data->beep_status = in_data->beep_status;
     
     rt_hw_interrupt_enable(level);
 }
@@ -353,44 +343,14 @@ void dev_sensor_data_read(void)
     //     sensor_data.sht3x_data_humi = dev_sht3x->humidity;
     // }
 
-    if (sensor_data.relay1_status != dev_sensor_status_result.relay1_status)
-    {
-        sensor_data.relay1_status = dev_sensor_status_result.relay1_status;
-    }
-    
-    if (sensor_data.relay2_status != dev_sensor_status_result.relay2_status)
-    {
-        sensor_data.relay2_status = dev_sensor_status_result.relay2_status;
-    }
-
-    if (sensor_data.beep_status != dev_sensor_status_result.beep_status)
-    {
-        sensor_data.beep_status = dev_sensor_status_result.beep_status;
-    }
 
     dev_sensor_data_upload(&sensor_data, &dev_sensor_data_result);
     dev_sensor_data_result.status = 1;
     // rt_thread_mdelay(10);
     // dev_sensor_read_buffer();
 
-    if (dev_sensor_data_result.status)
-    {
-        
-        
-        rt_sprintf(dev_sensor_data, "DSD_%d.%d_%d.%d_%d\n", (int)dev_sensor_data_result.sht3x_data_temp,
-                                                            (int)(dev_sensor_data_result.sht3x_data_temp * 10) % 10,
-                                                            (int)dev_sensor_data_result.sht3x_data_humi, 
-                                                            (int)(dev_sensor_data_result.sht3x_data_humi * 10) % 10,
-                                                            (int)dev_sensor_data_result.mq2_data);
-        rt_kprintf(dev_sensor_data);
-        
-
-
-
-    }
-
-
     
+
 }
 
 static void _dev_sensor_read_thr(void *arg)
@@ -398,6 +358,8 @@ static void _dev_sensor_read_thr(void *arg)
     do
     {
         dev_sensor_data_read();
+        rt_thread_mdelay(1);
+        dev_sensor_mqtt_buffer();
         rt_thread_mdelay(1000);
     } while (1);
 }
