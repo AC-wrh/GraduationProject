@@ -4,8 +4,7 @@ import mqtt from '../../utils/mqtt.js'
 
 const host = 'wxs://www.wenruihao.com/mqtt'
 
-var mqttInit = 0
-var timer
+var timer_flag = 0
 var timer_count = 0
 var message
 var messageBuffer = new Array()
@@ -68,27 +67,7 @@ Page({
         title: '设备连接成功'
       })
     })
-    mqttInit = 1
-    
 
-    timer = setInterval(function () {
-      timer_count++
-      if (timer_count === 5) {
-        that.data.client.publish('Applets', 'DEVICE_SENSOR_ALL', { qos: 1, retain: false })
-        timer_count = 0
-      } else {
-        that.data.client.publish('Applets', 'DEVICE_SENSOR_DATA', { qos: 1, retain: false })
-      }
-    }, 2000)
-
-    // timer = setInterval(function () {
-    //   that.data.client.publish('Applets', 'DEVICE_SENSOR_DATA', { qos: 1, retain: false })
-    // }, 2000)
-
-    // timer = setInterval(function () {
-    //   that.data.client.publish('Applets', 'DEVICE_SENSOR_STATUS', { qos: 1, retain: false })
-    // }, 9000)
-    
     //接收到订阅主题的消息的回调函数
     that.data.client.on("message", function (topic, payload) {
       /*
@@ -109,8 +88,6 @@ Page({
         "5:" + messageBuffer[5],
         "6:" + messageBuffer[6],
         "7:" + messageBuffer[7])
-
-      
 
       switch (message) {
 
@@ -155,32 +132,32 @@ Page({
             that.setData({ sht3x_humi_value: messageBuffer[2] + "%" })
             that.setData({ mq2_value: messageBuffer[3] + "lux" })
             that.setData({ zph02_value: messageBuffer[4] + "ps" })
+
             if (messageBuffer[5] === "2") {
               that.setData({ relay1_status: "ON" })
             } else {
               that.setData({ relay1_status: "OFF" })
             }
-            
+
             if (messageBuffer[6] === "2") {
               that.setData({ relay2_status: "ON" })
             } else {
               that.setData({ relay2_status: "OFF" })
             }
-    
+
             if (messageBuffer[7] === "2") {
               that.setData({ beep_status: "ON" })
             } else {
               that.setData({ beep_status: "OFF" })
             }
           }
-          
+
           if (messageBuffer[0] === "D$S-D") {
             that.setData({ sht3x_temp_value: messageBuffer[1] + "℃" })
             that.setData({ sht3x_humi_value: messageBuffer[2] + "%" })
             that.setData({ mq2_value: messageBuffer[3] + "lux" })
             that.setData({ zph02_value: messageBuffer[4] + "ps" })
           }
-
           break
       }
     })
@@ -209,7 +186,7 @@ Page({
    * 生命周期函数--监听页面初次渲染完成
    */
   onReady: function () {
-    
+
   },
 
   /**
@@ -217,16 +194,19 @@ Page({
    */
   onShow: function () {
     console.log("进入")
-    this.data.client.publish('Applets', 'APPLETS_ONLINE', { qos: 1, retain: false })
-    // timer = setInterval(function () {
-    //   timer_count++
-    //   if (timer_count === 5) {
-    //     that.data.client.publish('Applets', 'DEVICE_SENSOR_ALL', { qos: 1, retain: false })
-    //     timer_count = 0
-    //   } else {
-    //     that.data.client.publish('Applets', 'DEVICE_SENSOR_DATA', { qos: 1, retain: false })
-    //   }
-    // }, 2000)
+    var that = this
+
+    that.data.client.publish('Applets', 'DEVICE_SENSOR_ALL', { qos: 1, retain: false })
+    timer_flag = setInterval(function () {
+      timer_count++
+
+      if (timer_count === 5) {
+        that.data.client.publish('Applets', 'DEVICE_SENSOR_ALL', { qos: 1, retain: false })
+        timer_count = 0
+      } else {
+        that.data.client.publish('Applets', 'DEVICE_SENSOR_DATA', { qos: 1, retain: false })
+      }
+    }, 2000)
   },
 
   /**
@@ -234,7 +214,8 @@ Page({
    */
   onHide: function () {
     console.log("隐藏")
-    clearInterval(timer)
+    clearInterval(timer_flag)
+    timer_count = 0
   },
 
   /**
@@ -242,29 +223,30 @@ Page({
    */
   onUnload: function () {
     console.log("退出")
+    var that = this
+    clearInterval(timer_flag)
     this.data.client.publish('Applets', 'APPLETS_OFFLINE', { qos: 1, retain: false })
-    clearInterval(timer)
   },
 
   /**
    * 页面相关事件处理函数--监听用户下拉动作
    */
   onPullDownRefresh: function () {
-    
+
   },
 
   /**
    * 页面上拉触底事件的处理函数
    */
   onReachBottom: function () {
-    
+
   },
 
   /**
    * 用户点击右上角分享
    */
   onShareAppMessage: function () {
-    
+
   },
 
   /**
@@ -284,7 +266,6 @@ Page({
         duration: 2000
       })
     }
-    //this.setData({ Switch1Status: 'on' })
   },
 
   onClick_relay1_off: function () {
@@ -366,6 +347,4 @@ Page({
       })
     }
   }
-
-  
 })
