@@ -199,7 +199,6 @@ Page({
     that.data.client.publish('Applets', 'DEVICE_SENSOR_ALL', { qos: 1, retain: false })
     timer_flag = setInterval(function () {
       timer_count++
-
       if (timer_count === 5) {
         that.data.client.publish('Applets', 'DEVICE_SENSOR_ALL', { qos: 1, retain: false })
         timer_count = 0
@@ -207,6 +206,7 @@ Page({
         that.data.client.publish('Applets', 'DEVICE_SENSOR_DATA', { qos: 1, retain: false })
       }
     }, 2000)
+    
   },
 
   /**
