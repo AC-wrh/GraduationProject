@@ -3,7 +3,7 @@
  * @version: 
  * @Author: Adol
  * @Date: 2020-01-31 19:37:49
- * @LastEditTime : 2020-02-04 19:06:56
+ * @LastEditTime : 2020-02-05 23:30:30
  */
 #ifndef __DEV_SENSOR_H__
 #define __DEV_SENSOR_H__
@@ -19,39 +19,7 @@
 #include <rtdef.h>
 
 /**
- * 1. relay and beep device
-*/
-// #define PIN_RELAY1      GET_PIN(D, 12)
-#define PIN_RELAY1      GET_PIN(D, 13)
-#define PIN_RELAY2      GET_PIN(D, 14)
-#define PIN_BEEP        GET_PIN(D, 15)
-
-typedef enum
-{
-    DEV_SENSOR_INIT   = 0,
-    DEV_SENSOR_DEINIT = 1,
-    DEV_SENSOR_OPEN   = 2,
-    DEV_SENSOR_CLOSE  = 3,
-    DEV_SENSOR_MAX    = 4
-} dev_sensor_t;
-
-typedef struct
-{
-    rt_err_t relay1_status;
-    rt_err_t relay2_status;
-    rt_err_t beep_status;
-} dev_sensor_status_t;
-
-/**
- * 2. sht3x sensor
-*/
-#define PIN_I2C1_SCL GET_PIN(B, 8)
-#define PIN_I2C1_SDA GET_PIN(B, 9)
-#define SHT3X_I2C_BUS_NAME "i2c1"
-#define SHT3X_ADDR 0x44
-
-/**
- * 3. sensor data read buffer
+ * 1. sensor data read buffer
 */
 typedef struct
 {
@@ -62,7 +30,7 @@ typedef struct
     rt_uint32_t mq2_data;
     rt_err_t mq2_status;
 
-    rt_uint8_t zph02_data;
+    float zph02_data;
     rt_err_t zph02_status;
 
     rt_err_t relay1_status;
@@ -74,6 +42,43 @@ typedef struct
     uint8_t reserved;
 } dev_sensor_data_t;
 
+/**
+ * 2. relay and beep device
+*/
+// #define PIN_RELAY1      GET_PIN(D, 12)
+#define PIN_RELAY1      GET_PIN(D, 13)
+#define PIN_RELAY2      GET_PIN(D, 14)
+#define PIN_BEEP        GET_PIN(D, 15)
+
+typedef enum
+{
+    DEV_SENSOR_INIT,
+    DEV_SENSOR_DEINIT,
+    DEV_SENSOR_OPEN,
+    DEV_SENSOR_CLOSE,
+    DEV_SENSOR_BUSY,
+    DEV_SENSOR_MAX
+} dev_sensor_t;
+
+typedef struct
+{
+    rt_err_t relay1_status;
+    rt_err_t relay2_status;
+    rt_err_t beep_status;
+} dev_sensor_status_t;
+
+/**
+ * 3. sht3x sensor
+*/
+#define PIN_I2C1_SCL GET_PIN(B, 8)
+#define PIN_I2C1_SDA GET_PIN(B, 9)
+#define SHT3X_I2C_BUS_NAME "i2c1"
+#define SHT3X_ADDR 0x44
+
+/**
+ * 4. sht3x sensor
+*/
+#define ZPH02_UART_NAME         "uart3" 
 /* --------------------------- Function declaration --------------------------- */
 
 rt_err_t dev_sensor_relay1_ctl(dev_sensor_t relay_t);

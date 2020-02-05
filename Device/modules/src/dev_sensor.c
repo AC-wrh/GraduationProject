@@ -3,7 +3,7 @@
  * @version: 1.0
  * @Author: Adol
  * @Date: 2020-01-31 19:37:41
- * @LastEditTime : 2020-02-04 20:46:22
+ * @LastEditTime : 2020-02-05 23:57:09
  */
 #include <board.h>
 
@@ -162,7 +162,7 @@ rt_err_t dev_sensor_sht3x_deinit(void)
 {
     if (dev_sht3x == RT_NULL)
     {
-        return -RT_ERROR;
+        return RT_ERROR;
     }
 
     dev_sht3x_busy = 1;
@@ -193,7 +193,7 @@ rt_err_t dev_sensor_sht3x_init(void)
     if (dev_sht3x == RT_NULL)
     {
         LOG_E("The sht3x sensor initializes failure");
-        return -RT_ERROR;
+        return RT_ERROR;
     }
 
     dev_sht3x_inited = 1;
@@ -233,12 +233,144 @@ rt_err_t dev_sensor_mq2_init(void)
 
     return RT_EOK;
 }
-
 /**
  * 4. zph02 sensor
 */
-// static uint8_t dev_zph02_inited = 0;
-// static uint8_t dev_zph02_busy = 0;
+rt_device_t dev_zph02;   /* 串口设备句柄 */
+struct rt_semaphore dev_zph02_rx_sem;  /* 用于接收消息的信号量 */
+rt_uint8_t dev_zph02_inited = 0;
+rt_uint8_t dev_zph02_busy = 0;
+rt_uint8_t dev_zph02_value_buffer[9];
+rt_uint8_t dev_zph02_data_high;
+rt_uint8_t dev_zph02_data_low;
+
+struct serial_configure dev_zph02_uart_config = RT_SERIAL_CONFIG_DEFAULT;  /* 初始化配置参数 */
+
+static rt_err_t dev_zph02_value_check()
+{
+    char check_sum = 0;
+    for (size_t i = 0; i < 8; i++)
+    {
+        check_sum += dev_zph02_value_buffer[i];
+    }
+    if (check_sum == dev_zph02_value_buffer[8])
+    {
+        return RT_EOK;
+    }
+    else
+    {
+        return RT_ERROR;
+    }
+    
+    
+    
+}
+
+/* 接收数据回调函数 */
+static rt_err_t dev_sensor_zph02_callback(rt_device_t dev, rt_size_t size)
+{
+    /* 串口接收到数据后产生中断，调用此回调函数，然后发送接收信号量 */
+    rt_sem_release(&dev_zph02_rx_sem);
+
+    return RT_EOK;
+}
+
+static void dev_sensor_zph02_thread(void *parameter)
+{
+    char ch;
+    static unsigned char count = 0;
+
+    while (1)
+    {
+        /* 从串口读取一个字节的数据，没有读取到则等待接收信号量 */
+        while (rt_device_read(dev_zph02, -1, &ch, 1) != 1)
+        {
+            /* 阻塞等待接收信号量，等到信号量后再次读取数据 */
+            rt_sem_take(&dev_zph02_rx_sem, RT_WAITING_FOREVER);
+        }
+        /* 读取到的数据通过串口错位输出 */
+        // ch = ch + 1;
+        // rt_device_write(dev_zph02, 0, &ch, 1);
+        if (ch == 0xff)
+        {
+            count = 0;
+        }
+        
+        dev_zph02_value_buffer[count] = ch;
+        count++;
+        if (count == 9)
+        {
+            count = 0;
+            // if (dev_zph02_value_check() == RT_EOK)
+            {
+                if (dev_zph02_busy == 0)
+                {
+                    dev_zph02_data_high = dev_zph02_value_buffer[3];
+                    dev_zph02_data_low = dev_zph02_value_buffer[4];
+                    dev_zph02_busy = 1;
+                    // rt_kprintf("zph02 thread ok");
+                }
+                ;
+            }
+        }
+        
+        
+        
+        
+    }
+}
+
+rt_err_t dev_sensor_zph02_init()
+{
+    if (dev_zph02_inited)
+    {
+        return RT_EOK;
+    }
+    dev_zph02_busy = 1;
+    /* step1：查找串口设备 */
+    dev_zph02 = rt_device_find(ZPH02_UART_NAME);        //
+    if (!dev_zph02)
+    {
+        rt_kprintf("zph02 init failed!\n"); 
+        return RT_ERROR;
+    }
+
+    /* step2：修改串口配置参数 */
+    dev_zph02_uart_config.baud_rate = BAUD_RATE_9600;   //修改波特率为 9600
+    dev_zph02_uart_config.data_bits = DATA_BITS_8;      //数据位 8
+    dev_zph02_uart_config.stop_bits = STOP_BITS_1;      //停止位 1
+    dev_zph02_uart_config.bufsz     = 128;              //修改缓冲区 buff size 为 128
+    dev_zph02_uart_config.parity    = PARITY_NONE;      //无奇偶校验位
+    
+    /* step3：控制串口设备。通过控制接口传入命令控制字，与控制参数 */
+    rt_device_control(dev_zph02, RT_DEVICE_CTRL_CONFIG, &dev_zph02_uart_config);
+    
+    /* 初始化信号量 */
+    rt_sem_init(&dev_zph02_rx_sem, "dev_zph02_rx_sem", 0, RT_IPC_FLAG_FIFO);
+    
+    /* step4：打开串口设备。以中断接收及轮询发送模式打开串口设备 */
+    rt_device_open(dev_zph02, RT_DEVICE_FLAG_INT_RX);
+    
+    /* 设置接收回调函数 */
+    rt_device_set_rx_indicate(dev_zph02, dev_sensor_zph02_callback);
+    
+    /* 创建 dev_zph02 线程 */
+    rt_thread_t thread = rt_thread_create("zph02", dev_sensor_zph02_thread, RT_NULL, 1024, 25, 10);
+    /* 创建成功则启动线程 */
+    if (thread != RT_NULL)
+    {
+        rt_thread_startup(thread);
+    }
+    else
+    {
+        rt_kprintf("zph02 thread failed!\n"); 
+        return RT_ERROR;
+    }
+    dev_zph02_inited = 1;
+    dev_zph02_busy = 0;
+    return RT_EOK;
+    
+}
 
 /**
  * 5. sensor data 
@@ -250,22 +382,24 @@ void dev_sensor_mqtt_buffer(void)
 {
     if (dev_sensor_data_result.status)
     {
-        rt_sprintf(dev_sensor_all, "D$S-A_%d.%d_%d.%d_%d_%d_%d_%d_%d\n", (int)dev_sensor_data_result.sht3x_data_temp,
-                                                                        (int)(dev_sensor_data_result.sht3x_data_temp * 10) % 10,
-                                                                        (int)dev_sensor_data_result.sht3x_data_humi, 
-                                                                        (int)(dev_sensor_data_result.sht3x_data_humi * 10) % 10,
-                                                                        (int)dev_sensor_data_result.mq2_data,
-                                                                        0,
-                                                                        (int)dev_sensor_data_result.relay1_status,
-                                                                        (int)dev_sensor_data_result.relay2_status,
-                                                                        (int)dev_sensor_data_result.beep_status);
+        rt_sprintf(dev_sensor_all, "D$S-A_%d.%d_%d.%d_%d_%d.%d_%d_%d_%d_%d\n", (int)dev_sensor_data_result.sht3x_data_temp,
+                                                                                (int)(dev_sensor_data_result.sht3x_data_temp * 10) % 10,
+                                                                                (int)dev_sensor_data_result.sht3x_data_humi, 
+                                                                                (int)(dev_sensor_data_result.sht3x_data_humi * 10) % 10,
+                                                                                (int)dev_sensor_data_result.mq2_data,
+                                                                                (int)dev_sensor_data_result.zph02_data / 10,
+                                                                                (int)dev_sensor_data_result.zph02_data % 10,
+                                                                                (int)dev_sensor_data_result.relay1_status,
+                                                                                (int)dev_sensor_data_result.relay2_status,
+                                                                                (int)dev_sensor_data_result.beep_status);
 
-        rt_sprintf(dev_sensor_data, "D$S-D_%d.%d_%d.%d_%d_%d\n", (int)dev_sensor_data_result.sht3x_data_temp,
-                                                                (int)(dev_sensor_data_result.sht3x_data_temp * 10) % 10,
-                                                                (int)dev_sensor_data_result.sht3x_data_humi, 
-                                                                (int)(dev_sensor_data_result.sht3x_data_humi * 10) % 10,
-                                                                (int)dev_sensor_data_result.mq2_data,
-                                                                0);
+        rt_sprintf(dev_sensor_data, "D$S-D_%d.%d_%d.%d_%d_%d.%d\n", (int)dev_sensor_data_result.sht3x_data_temp,
+                                                                    (int)(dev_sensor_data_result.sht3x_data_temp * 10) % 10,
+                                                                    (int)dev_sensor_data_result.sht3x_data_humi, 
+                                                                    (int)(dev_sensor_data_result.sht3x_data_humi * 10) % 10,
+                                                                    (int)dev_sensor_data_result.mq2_data,
+                                                                    (int)dev_sensor_data_result.zph02_data / 10,
+                                                                    (int)dev_sensor_data_result.zph02_data % 10);
     }
 }
 
@@ -301,7 +435,7 @@ void dev_sensor_data_read(void)
     }
     else
     {
-        sensor_data.sht3x_status = -RT_ERROR;
+        sensor_data.sht3x_status = RT_ERROR;
         sht3x_read_singleshot(dev_sht3x);
         // rt_thread_mdelay(1);
         sensor_data.sht3x_data_temp = dev_sht3x->temperature;
@@ -320,37 +454,36 @@ void dev_sensor_data_read(void)
     }
     else
     {
-        sensor_data.mq2_status = -RT_ERROR;
+        sensor_data.mq2_status = RT_ERROR;
         // rt_thread_mdelay(1);
         sensor_data.mq2_data = get_adc_value();
         sensor_data.mq2_status = RT_EOK;
     }
 
-    // if (dev_sht3x_inited == 0)
-    // {/* zph02 */
-    //     LOG_E("sht3x init failed! Retry...");
-    //     rt_thread_mdelay(2000);
-    //     if (dev_sht3x_busy == 0)
-    //     {
-    //         dev_sensor_sht3x_init();
-    //     }
-    // }
-    // else
-    // {
-    //     rt_thread_mdelay(1);
-    //     sht3x_read_singleshot(dev_sht3x);
-    //     sensor_data.sht3x_data_temp = dev_sht3x->temperature;
-    //     sensor_data.sht3x_data_humi = dev_sht3x->humidity;
-    // }
+    if (dev_zph02_inited == 0)
+    {
+        LOG_E("zph02 init failed! Retry...");
+        rt_thread_mdelay(2000);
+        if (dev_zph02_busy == 0)
+        {
+            dev_sensor_zph02_init();
+        }        
+    }
+    else
+    {
+        sensor_data.zph02_status = RT_ERROR;
+        if (dev_zph02_busy == 1)
+        {
+            sensor_data.zph02_data = ((dev_zph02_data_high * 100) + dev_zph02_data_low);
+            dev_zph02_busy = 0;
+        }
+        
+        sensor_data.zph02_status = RT_EOK;
+    }
 
 
     dev_sensor_data_upload(&sensor_data, &dev_sensor_data_result);
     dev_sensor_data_result.status = 1;
-    // rt_thread_mdelay(10);
-    // dev_sensor_read_buffer();
-
-    
-
 }
 
 static void _dev_sensor_read_thr(void *arg)
@@ -386,6 +519,7 @@ rt_err_t dev_sensor_init(void)
     dev_sensor_sht3x_init();
     // rt_thread_mdelay(100);
     dev_sensor_mq2_init();
+    dev_sensor_zph02_init();
     rt_thread_mdelay(500);
     mqtt_start();
     rt_thread_mdelay(500);
