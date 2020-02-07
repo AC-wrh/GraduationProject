@@ -3,7 +3,7 @@
  * @version: 
  * @Author: Adol
  * @Date: 2020-01-31 19:37:49
- * @LastEditTime : 2020-02-05 23:30:30
+ * @LastEditTime : 2020-02-07 23:01:44
  */
 #ifndef __DEV_SENSOR_H__
 #define __DEV_SENSOR_H__
@@ -25,12 +25,11 @@ typedef struct
 {
     float sht3x_data_temp;
     float sht3x_data_humi;
-    rt_err_t sht3x_status;
-
     rt_uint32_t mq2_data;
-    rt_err_t mq2_status;
+    rt_uint32_t zph02_data;
 
-    float zph02_data;
+    rt_err_t sht3x_status;
+    rt_err_t mq2_status;
     rt_err_t zph02_status;
 
     rt_err_t relay1_status;
@@ -57,6 +56,7 @@ typedef enum
     DEV_SENSOR_OPEN,
     DEV_SENSOR_CLOSE,
     DEV_SENSOR_BUSY,
+    DEV_SENSOR_IDLE,
     DEV_SENSOR_MAX
 } dev_sensor_t;
 

@@ -20,6 +20,6 @@ int main(void)
 {
 
     dev_sensor_init();
-
+    
     return RT_EOK;
 }
