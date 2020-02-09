@@ -104,7 +104,8 @@
         </view>
       </view>
     </view>
-  </view> 
+    <view class="weui-article__warning">{{text_buffer}}</view>
+  </view>
   <view class="weui-footer weui-footer_fixed-bottom">
     <view class="weui-footer__text"> 毕业设计---基于RT-Thread的智能家居系统 @ 温锐豪</view>
   </view>

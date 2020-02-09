@@ -20,11 +20,12 @@ Page({
     //reconnectCounts: 0,
     sht3x_temp_value: "-- ℃",
     sht3x_humi_value: "-- %",
-    mq2_value: "--",
-    zph02_value: "--",
+    mq2_value: "-- ppm",
+    zph02_value: "-- μg/m³",
     relay1_status: "---",
     relay2_status: "---",
     beep_status: "---",
+    text_buffer: " ",
 
     //MQTT连接的配置
     options: {
@@ -128,10 +129,10 @@ Page({
 
         default:
           if (messageBuffer[0] === "D$S-A") {
-            that.setData({ sht3x_temp_value: messageBuffer[1] + "℃" })
-            that.setData({ sht3x_humi_value: messageBuffer[2] + "%" })
-            that.setData({ mq2_value: messageBuffer[3] + "lux" })
-            that.setData({ zph02_value: messageBuffer[4] + "ps" })
+            that.setData({ sht3x_temp_value: messageBuffer[1] + " ℃" })
+            that.setData({ sht3x_humi_value: messageBuffer[2] + " %" })
+            that.setData({ mq2_value: messageBuffer[3] + " ppm" })
+            that.setData({ zph02_value: messageBuffer[4] + " μg/m³" })
 
             if (messageBuffer[5] === "2") {
               that.setData({ relay1_status: "ON" })
@@ -153,10 +154,16 @@ Page({
           }
 
           if (messageBuffer[0] === "D$S-D") {
-            that.setData({ sht3x_temp_value: messageBuffer[1] + "℃" })
-            that.setData({ sht3x_humi_value: messageBuffer[2] + "%" })
-            that.setData({ mq2_value: messageBuffer[3] + "lux" })
-            that.setData({ zph02_value: messageBuffer[4] + "ps" })
+            that.setData({ sht3x_temp_value: messageBuffer[1] + " ℃" })
+            that.setData({ sht3x_humi_value: messageBuffer[2] + " %" })
+            that.setData({ mq2_value: messageBuffer[3] + " ppm" })
+            that.setData({ zph02_value: messageBuffer[4] + " μg/m³" })
+          }
+
+          if (messageBuffer[3] > 50) {
+            that.setData({ text_buffer: "天然气泄漏，请及时通风" })
+          } else {
+            that.setData({ text_buffer: " " })
           }
           break
       }

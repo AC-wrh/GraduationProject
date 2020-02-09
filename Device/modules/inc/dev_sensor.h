@@ -3,7 +3,7 @@
  * @version: 
  * @Author: Adol
  * @Date: 2020-01-31 19:37:49
- * @LastEditTime : 2020-02-07 23:01:44
+ * @LastEditTime : 2020-02-09 21:07:05
  */
 #ifndef __DEV_SENSOR_H__
 #define __DEV_SENSOR_H__
@@ -17,6 +17,7 @@
 #include <rtthread.h>
 #include <rtdevice.h>
 #include <rtdef.h>
+#include "math.h"
 
 /**
  * 1. sensor data read buffer
@@ -25,7 +26,7 @@ typedef struct
 {
     float sht3x_data_temp;
     float sht3x_data_humi;
-    rt_uint32_t mq2_data;
+    float mq2_data;
     rt_uint32_t zph02_data;
 
     rt_err_t sht3x_status;

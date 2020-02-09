@@ -83,3 +83,13 @@
     line-height: 2.3em;
     color: rgb(0, 0, 0);
 }
+
+.weui-article__warning{
+    margin: 5px;
+    padding: 0 5px;
+    text-align: left;
+    background-color: #FFFFFF;
+    height: 2.3em;
+    line-height: 2.3em;
+    color: red
+}

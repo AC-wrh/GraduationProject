@@ -3,7 +3,7 @@
  * @version: 1.0
  * @Author: Adol
  * @Date: 2020-01-31 19:37:41
- * @LastEditTime : 2020-02-07 23:24:41
+ * @LastEditTime : 2020-02-09 22:50:54
  */
 #include <board.h>
 
@@ -18,12 +18,12 @@ dev_sensor_data_t dev_sensor_data_result = {
     .zph02_data = 0,
 
     .sht3x_status = DEV_SENSOR_DEINIT,
-    .mq2_status   = DEV_SENSOR_DEINIT,
+    .mq2_status = DEV_SENSOR_DEINIT,
     .zph02_status = DEV_SENSOR_DEINIT,
 
     .relay1_status = DEV_SENSOR_DEINIT,
     .relay2_status = DEV_SENSOR_DEINIT,
-    .beep_status   = DEV_SENSOR_DEINIT,
+    .beep_status = DEV_SENSOR_DEINIT,
 
     .status = 0};
 
@@ -123,7 +123,7 @@ rt_err_t dev_sensor_beep_ctl(dev_sensor_t beep_t)
     return RT_EOK;
 }
 
-rt_err_t dev_sensor_xxx_ctl(rt_base_t pin_t, dev_sensor_t status_t)
+rt_err_t dev_sensor_ctl(rt_base_t pin_t, dev_sensor_t status_t)
 {
     switch (status_t)
     {
@@ -248,12 +248,12 @@ static rt_err_t dev_zph02_value_check()
     {
         check_sum += dev_zph02_value_buffer[i];
     }
-
     if (((check_sum ^ 0xff) + 1) == dev_zph02_value_buffer[i])
     {
         dev_zph02_data_high = dev_zph02_value_buffer[3];
         dev_zph02_data_low = dev_zph02_value_buffer[4];
         dev_sensor_data_result.zph02_status = DEV_SENSOR_IDLE;
+
         return RT_EOK;
     }
     else
@@ -284,9 +284,7 @@ static void dev_sensor_zph02_thread(void *parameter)
             /* 阻塞等待接收信号量，等到信号量后再次读取数据 */
             rt_sem_take(&dev_zph02_rx_sem, RT_WAITING_FOREVER);
         }
-        /* 读取到的数据通过串口错位输出 */
-        // ch = ch + 1;
-        // rt_device_write(dev_zph02, 0, &ch, 1);
+        
         if (dev_sensor_data_result.zph02_status == DEV_SENSOR_IDLE)
         {
             if (ch == 0xff)
@@ -316,7 +314,7 @@ rt_err_t dev_sensor_zph02_init()
     dev_sensor_data_result.zph02_status = DEV_SENSOR_BUSY;
 
     /* step1：查找串口设备 */
-    dev_zph02 = rt_device_find(ZPH02_UART_NAME); //
+    dev_zph02 = rt_device_find(ZPH02_UART_NAME);
     if (!dev_zph02)
     {
         LOG_E("zph02 init failed!\n");
@@ -367,28 +365,32 @@ rt_err_t dev_sensor_zph02_init()
 char dev_sensor_all[100];
 char dev_sensor_data[100];
 
+static float dev_mq2_value = 0.0f, Vrl = 0.0f;
+
 void dev_sensor_mqtt_buffer(void)
 {
     if (dev_sensor_data_result.status)
     {
-        rt_sprintf(dev_sensor_all, "D$S-A_%d.%d_%d.%d_%d_%d.%d_%d_%d_%d_%d\n", (int)dev_sensor_data_result.sht3x_data_temp,
+        rt_sprintf(dev_sensor_all, "D$S-A_%d.%d_%d.%d_%d.%d_%d.%d_%d_%d_%d_%d\n", (int)dev_sensor_data_result.sht3x_data_temp,
                                                                                 (int)(dev_sensor_data_result.sht3x_data_temp * 10) % 10,
                                                                                 (int)dev_sensor_data_result.sht3x_data_humi,
                                                                                 (int)(dev_sensor_data_result.sht3x_data_humi * 10) % 10,
-                                                                                (int)dev_sensor_data_result.mq2_data,
+                                                                                (int)dev_sensor_data_result.mq2_data * 10 / 10,
+                                                                                (int)(dev_sensor_data_result.mq2_data * 10) % 10,
                                                                                 (int)dev_sensor_data_result.zph02_data / 10,
                                                                                 (int)dev_sensor_data_result.zph02_data % 10,
                                                                                 (int)dev_sensor_data_result.relay1_status,
                                                                                 (int)dev_sensor_data_result.relay2_status,
                                                                                 (int)dev_sensor_data_result.beep_status);
 
-        rt_sprintf(dev_sensor_data, "D$S-D_%d.%d_%d.%d_%d_%d.%d\n", (int)dev_sensor_data_result.sht3x_data_temp,
-                                                                    (int)(dev_sensor_data_result.sht3x_data_temp * 10) % 10,
-                                                                    (int)dev_sensor_data_result.sht3x_data_humi,
-                                                                    (int)(dev_sensor_data_result.sht3x_data_humi * 10) % 10,
-                                                                    (int)dev_sensor_data_result.mq2_data,
-                                                                    (int)dev_sensor_data_result.zph02_data / 10,
-                                                                    (int)dev_sensor_data_result.zph02_data % 10);
+        rt_sprintf(dev_sensor_data, "D$S-D_%d.%d_%d.%d_%d.%d_%d.%d\n", (int)dev_sensor_data_result.sht3x_data_temp,
+                                                                        (int)(dev_sensor_data_result.sht3x_data_temp * 10) % 10,
+                                                                        (int)dev_sensor_data_result.sht3x_data_humi,
+                                                                        (int)(dev_sensor_data_result.sht3x_data_humi * 10) % 10,
+                                                                        (int)dev_sensor_data_result.mq2_data * 10 / 10,
+                                                                        (int)(dev_sensor_data_result.mq2_data* 10) % 10,
+                                                                        (int)dev_sensor_data_result.zph02_data / 10,
+                                                                        (int)dev_sensor_data_result.zph02_data % 10);
     }
 }
 
@@ -432,7 +434,20 @@ void dev_sensor_data_read(void)
     if (dev_mq2_inited)
     { /* mq2 */
         dev_sensor_data_result.mq2_status = DEV_SENSOR_BUSY;
-        sensor_data.mq2_data = get_adc_value();
+        dev_mq2_value = get_adc_value();
+        Vrl = 3.3f * dev_mq2_value / 4095.0f;
+        //Vrl/Rl = (Vc - Vrl)/Rs;   y = 4391.7 * ppm ^ -2.647   air: RS / R0 = 10   R0 = 7.905
+        sensor_data.mq2_data = 4391.7f * pow((3.3f - Vrl) / Vrl * 5.1f / 7.905, -2.647f);
+        if (sensor_data.mq2_data > 50)
+        {
+            dev_sensor_ctl(PIN_BEEP, DEV_SENSOR_OPEN);
+        }
+        else
+        {
+            dev_sensor_ctl(PIN_BEEP, DEV_SENSOR_CLOSE);
+        }
+        
+        
         dev_sensor_data_result.mq2_status = DEV_SENSOR_IDLE;
     }
     else
