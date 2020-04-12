@@ -3,7 +3,7 @@
  * @version: 1.0
  * @Author: Adol
  * @Date: 2020-01-31 19:37:41
- * @LastEditTime : 2020-02-09 22:50:54
+ * @LastEditTime: 2020-04-12 15:53:14
  */
 #include <board.h>
 
@@ -99,22 +99,20 @@ rt_err_t dev_sensor_beep_ctl(dev_sensor_t beep_t)
     case DEV_SENSOR_INIT:
         /* set the pin mode to push-pull output */
         rt_pin_mode(PIN_BEEP, PIN_MODE_OUTPUT);
-        rt_pin_write(PIN_BEEP, PIN_HIGH);
+        rt_pin_write(PIN_BEEP, PIN_LOW);
         dev_sensor_data_result.beep_status = DEV_SENSOR_CLOSE;
         break;
     case DEV_SENSOR_DEINIT:
-        rt_pin_write(PIN_BEEP, PIN_HIGH);
+        rt_pin_write(PIN_BEEP, PIN_LOW);
         dev_sensor_data_result.beep_status = DEV_SENSOR_CLOSE;
         break;
     case DEV_SENSOR_OPEN:
-        rt_pin_write(PIN_BEEP, PIN_LOW);
-        dev_sensor_data_result.beep_status = DEV_SENSOR_OPEN;
-        mqtt_publish(mqtt_message_buffer[BEEP_ON]);
+        rt_pin_write(PIN_BEEP, PIN_HIGH);
+        // mqtt_publish(mqtt_message_buffer[BEEP_ON]);
         break;
     case DEV_SENSOR_CLOSE:
-        rt_pin_write(PIN_BEEP, PIN_HIGH);
-        dev_sensor_data_result.beep_status = DEV_SENSOR_CLOSE;
-        mqtt_publish(mqtt_message_buffer[BEEP_OFF]);
+        rt_pin_write(PIN_BEEP, PIN_LOW);
+        // mqtt_publish(mqtt_message_buffer[BEEP_OFF]);
         break;
     default:
         break;
@@ -440,13 +438,15 @@ void dev_sensor_data_read(void)
         sensor_data.mq2_data = 4391.7f * pow((3.3f - Vrl) / Vrl * 5.1f / 7.905, -2.647f);
         if (sensor_data.mq2_data > 50)
         {
-            dev_sensor_ctl(PIN_BEEP, DEV_SENSOR_OPEN);
+            if (dev_sensor_data_result.beep_status == DEV_SENSOR_OPEN)
+            {
+                dev_sensor_beep_ctl(DEV_SENSOR_OPEN);
+            }
         }
         else
         {
-            dev_sensor_ctl(PIN_BEEP, DEV_SENSOR_CLOSE);
+            dev_sensor_beep_ctl(DEV_SENSOR_CLOSE);
         }
-        
         
         dev_sensor_data_result.mq2_status = DEV_SENSOR_IDLE;
     }

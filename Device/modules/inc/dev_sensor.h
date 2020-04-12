@@ -3,7 +3,7 @@
  * @version: 
  * @Author: Adol
  * @Date: 2020-01-31 19:37:49
- * @LastEditTime : 2020-02-09 21:07:05
+ * @LastEditTime: 2020-04-12 15:50:53
  */
 #ifndef __DEV_SENSOR_H__
 #define __DEV_SENSOR_H__
@@ -48,7 +48,7 @@ typedef struct
 // #define PIN_RELAY1      GET_PIN(D, 12)
 #define PIN_RELAY1      GET_PIN(D, 13)
 #define PIN_RELAY2      GET_PIN(D, 14)
-#define PIN_BEEP        GET_PIN(D, 15)
+#define PIN_BEEP        GET_PIN(B, 2)
 
 typedef enum
 {
@@ -61,12 +61,12 @@ typedef enum
     DEV_SENSOR_MAX
 } dev_sensor_t;
 
-typedef struct
-{
-    rt_err_t relay1_status;
-    rt_err_t relay2_status;
-    rt_err_t beep_status;
-} dev_sensor_status_t;
+// typedef struct
+// {
+//     rt_err_t relay1_status;
+//     rt_err_t relay2_status;
+//     rt_err_t beep_status;
+// } dev_sensor_status_t;
 
 /**
  * 3. sht3x sensor
@@ -93,6 +93,7 @@ rt_err_t dev_sensor_init(void);
 
 extern char dev_sensor_all[100];
 extern char dev_sensor_data[100];
+extern dev_sensor_data_t dev_sensor_data_result;
 
 #ifdef __cplusplus
 }

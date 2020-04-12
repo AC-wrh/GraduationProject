@@ -3,7 +3,7 @@
  * @version: 
  * @Author: Adol
  * @Date: 2020-01-28 18:51:13
- * @LastEditTime : 2020-02-04 21:36:38
+ * @LastEditTime: 2020-04-12 15:39:38
  */
 
 #include <board.h>
@@ -99,11 +99,13 @@ static void mqtt_sub_callback(MQTTClient *c, MessageData *msg_data)
     }
     else if (!(strcmp(((char *)msg_data->message->payload), mqtt_message_buffer[BEEP_ON])))
     {
-        dev_sensor_beep_ctl(DEV_SENSOR_OPEN);
+        dev_sensor_data_result.beep_status = DEV_SENSOR_OPEN;
+        mqtt_publish(mqtt_message_buffer[BEEP_ON]);
     }
     else if (!(strcmp(((char *)msg_data->message->payload), mqtt_message_buffer[BEEP_OFF])))
     {
-        dev_sensor_beep_ctl(DEV_SENSOR_CLOSE);
+        dev_sensor_data_result.beep_status = DEV_SENSOR_CLOSE;
+        mqtt_publish(mqtt_message_buffer[BEEP_OFF]);
     }
 }
 
